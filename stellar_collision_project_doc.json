@@ -1,0 +1,507 @@
+{
+  "project": {
+    "name": "Stellar Collision — Conversation Canvas",
+    "version": "0.1",
+    "created": "2026-03-17",
+    "status": "PROTOTYPE",
+    "thesis": "Conversations are collisions of perspectives. Visualize the overlap, navigate the tension, discover shared territory.",
+    "tagline": "Two stellar maps collide. Where they connect is where conversation happens."
+  },
+
+  "core_concept": {
+    "metaphor": "Stellar Collision",
+    "description": "Two parties each generate their own constellation of ideas (mental models, tensions, questions, context). The meeting interface merges both constellations into a collision space where nodes attract (shared interest), repel (misalignment), or create new gravity (unexpected connections).",
+    "visual_principle": "Anschauung — what the eye catches at first glance must performatively communicate the concept",
+    "first_glance_intuition": "Two people. Two perspectives. They're colliding. Some ideas connect. Some repel. The space between them is where the conversation happens."
+  },
+
+  "use_case": {
+    "primary": "Exploratory business meetings where both parties want to discover alignment without formal agendas",
+    "meeting_context": {
+      "external_party": {
+        "name": "Kellen Sanger",
+        "role": "VP, Head of Strategy & AI Enablement",
+        "organization": "SOPHiA GENETICS",
+        "location": "US (ET timezone)"
+      },
+      "self": {
+        "name": "Achim Imboden",
+        "role": "Senior Expert Change Management",
+        "focus": "AI adoption, human-AI interaction, organizational change"
+      },
+      "meeting": {
+        "date": "Wednesday, 2026-03-18",
+        "time": "09:30 ET / 15:30 CET",
+        "duration": "40 minutes",
+        "nature": "Exploratory, no formal agenda"
+      }
+    }
+  },
+
+  "architecture": {
+    "pattern": "Dual-constellation collision visualization",
+    "components": {
+      "left_panel": "Party A detail content (slides in on node click)",
+      "center_canvas": "D3 force-directed graph showing both constellations",
+      "right_panel": "Party B detail content (slides in on node click)"
+    },
+    "interaction_model": "Click node → graph rearranges (clicked node to center) → relevant detail panel slides in → conversation anchors on that topic"
+  },
+
+  "visual_system": {
+    "base_aesthetic": "GitHub Atlas D3 style",
+    "design_tokens": {
+      "background": "#080610",
+      "party_a_color": "#6e4f84 (purple)",
+      "party_a_glow": "#8b6aa0 (purple-mid)",
+      "party_b_color": "#4d807f (teal)",
+      "party_b_glow": "#6aa8a7 (teal-hi)",
+      "collision_color": "#cab1df (lavender — blended overlap)",
+      "text_primary": "#c4b4d8",
+      "text_secondary": "#9a88b8",
+      "border": "rgba(110,79,132,.2)"
+    },
+    "typography": {
+      "body": "Plus Jakarta Sans",
+      "mono": "JetBrains Mono"
+    },
+    "background_layers": [
+      "Radial gradients (purple/dark hues)",
+      "Dot grid overlay (opacity .22)",
+      "Scan line animation (vertical drift)"
+    ],
+    "node_styling": {
+      "glow_halo": "Outer circle at 2.2x radius, opacity .04",
+      "main_circle": "Inner circle, opacity .18, stroke-width 1.2",
+      "label": "JetBrains Mono, 8.5px, positioned below node",
+      "hover": "Expand to 1.25x radius, increase opacity to .55",
+      "selected": "Expand to 1.3x radius, opacity .7, stroke-width 2"
+    },
+    "link_styling": {
+      "intra_party": "Solid color (purple or teal), low opacity (.15)",
+      "cross_party": "Gradient (purple → teal), medium opacity (.35)",
+      "on_hover": "Pulse animation, increased opacity"
+    }
+  },
+
+  "node_categories": {
+    "symmetric_structure": true,
+    "description": "Both parties use the same category schema for consistency",
+    "categories": [
+      {
+        "id": "mental_models",
+        "label": "Mental Models",
+        "description": "Core frameworks, lenses, or thinking patterns",
+        "count": "3 per party",
+        "node_size": "24px radius (largest)"
+      },
+      {
+        "id": "tensions",
+        "label": "Tensions / Frictions",
+        "description": "Unresolved problems, competing forces, strategic challenges",
+        "count": "4-6 per party",
+        "node_size": "16px radius (medium)"
+      },
+      {
+        "id": "questions",
+        "label": "Questions",
+        "description": "What each party wants to explore or understand",
+        "count": "3-5 per party",
+        "node_size": "12px radius (small)"
+      },
+      {
+        "id": "context",
+        "label": "Context Nodes",
+        "description": "Company state, current initiatives, domain-specific background",
+        "count": "3-5 per party",
+        "node_size": "14px radius (small-medium)"
+      }
+    ]
+  },
+
+  "workflow": {
+    "phase_1_template": {
+      "description": "Define reusable template structure for any meeting",
+      "deliverable": "HTML shell with D3 force simulation, dual panels, color-coded node system",
+      "status": "IN PROGRESS"
+    },
+    "phase_2_md_generation": {
+      "description": "Each party generates their constellation via LLM",
+      "input_format": "Meeting context + role + focus areas",
+      "output_format": "Structured JSON (nodes + intra-party links)",
+      "status": "PLANNED",
+      "onboarding_vision": "Future: each party uses their own LLM to self-generate. Prototype: one person generates both sides."
+    },
+    "phase_3_collision_llm": {
+      "description": "Meta-LLM analyzes both constellations and generates collision graph",
+      "tasks": [
+        "Semantic similarity analysis between nodes",
+        "Cross-party connection generation",
+        "Spatial positioning (high-overlap nodes → center)",
+        "Output final HTML with merged graph"
+      ],
+      "status": "PLANNED"
+    },
+    "phase_4_meeting_interaction": {
+      "description": "Live usage during the actual meeting",
+      "modes": [
+        "Real-time exploration (collaborative navigation)",
+        "Guided tour (presenter leads through collision zones)",
+        "Serendipity mode (pick any glowing node, conversation starts there)"
+      ],
+      "status": "DESIGN"
+    }
+  },
+
+  "prototype_scope": {
+    "goal": "Build first working version for SOPHiA GENETICS meeting (Wednesday 2026-03-18)",
+    "constraints": [
+      "Single HTML file, self-contained",
+      "Manual content input (both sides authored by Achim)",
+      "Manual connection mapping (no auto-LLM analysis yet)",
+      "D3.js force simulation for physics",
+      "Click interaction → detail panels"
+    ],
+    "deliverables": [
+      "stellar_collision_v1.html — working prototype",
+      "Content JSON for Achim's constellation",
+      "Content JSON for Kellen's constellation (inferred or authored)",
+      "Connection mapping between nodes"
+    ]
+  },
+
+  "party_a_constellation": {
+    "party": "Achim Imboden",
+    "mental_models": [
+      {
+        "id": "triangle",
+        "label": "The Working Triangle",
+        "description": "Change Management × AI Adoption × Business Reality. These three forces create tension — and that tension is where value emerges.",
+        "details": [
+          "Change Management: How humans adapt to new systems and workflows",
+          "AI Adoption: Making intelligence operational, not just theoretical",
+          "Business Reality: Where the model meets execution constraints"
+        ],
+        "note": "The real work happens at the intersections — not inside the vertices."
+      },
+      {
+        "id": "interface",
+        "label": "Interface as Leverage",
+        "description": "AI's value isn't just in generating intelligence — it's in making that intelligence navigable and usable. The interface is the real bottleneck.",
+        "details": [
+          "Maps instead of lists: Spatial orientation over linear overload",
+          "Interaction over generation: Human steers, AI executes",
+          "Bandwidth management: Humans filter by navigation, not by reading"
+        ],
+        "note": "The next UX paradigm isn't about better prompts — it's about better surfaces to explore AI-generated possibility spaces."
+      },
+      {
+        "id": "serendipity",
+        "label": "Serendipity Over Productivity",
+        "description": "AI adoption narratives over-index on efficiency and productivity. But the real unlock is serendipity — discovering insights you weren't looking for.",
+        "details": [
+          "Exploration vs. optimization: Wandering beats targeting for discovery",
+          "Side-door insights: The best findings emerge from adjacent exploration",
+          "Low-stakes experimentation: Remove friction, increase surface area"
+        ],
+        "note": "Productivity is table stakes. Serendipity is the strategic advantage."
+      }
+    ],
+    "tensions": [
+      {
+        "id": "int-vs-use",
+        "label": "Intelligence vs. Usability",
+        "description": "Models get smarter, but interfaces stay dumb. The gap between AI capability and human operability is widening, not shrinking."
+      },
+      {
+        "id": "model-vs-workflow",
+        "label": "Model Power vs. Workflow Reality",
+        "description": "What a model *can* do and what a user *will* do are entirely different problems. Most AI rollouts fail at the second, not the first."
+      },
+      {
+        "id": "data-vs-bandwidth",
+        "label": "Data Richness vs. Human Bandwidth",
+        "description": "More data doesn't mean better decisions. It means cognitive overload. The interface needs to manage attention, not just display information."
+      },
+      {
+        "id": "capability-vs-trust",
+        "label": "AI Capability vs. Trust Threshold",
+        "description": "Clinical workflows demand trust. But trust isn't built through accuracy alone — it's built through explainability, predictability, and user control."
+      },
+      {
+        "id": "neutrality-vs-action",
+        "label": "Platform Neutrality vs. Actionability",
+        "description": "SOPHiA positions as neutral intelligence. But neutrality without clear next-action pathways creates decision paralysis, not empowerment."
+      },
+      {
+        "id": "multimodal-vs-fragmented",
+        "label": "Multimodal Integration vs. Fragmented Workflows",
+        "description": "Genomics + imaging + clinical data = powerful insights. But if they require three different navigation models, users won't integrate them."
+      }
+    ],
+    "questions": [
+      {
+        "id": "q1",
+        "label": "How do clinicians navigate multimodal outputs in practice?",
+        "connects_to": ["tensions/multimodal-vs-fragmented", "tensions/data-vs-bandwidth"]
+      },
+      {
+        "id": "q2",
+        "label": "What makes AI outputs trustworthy in clinical settings?",
+        "connects_to": ["tensions/capability-vs-trust"]
+      },
+      {
+        "id": "q3",
+        "label": "Where does AI rollout friction actually occur at SOPHiA?",
+        "connects_to": ["tensions/model-vs-workflow", "mental_models/triangle"]
+      }
+    ],
+    "context": [
+      {
+        "id": "c1",
+        "label": "IMD Change Management Program",
+        "description": "Current engagement in executive education focused on organizational transformation"
+      },
+      {
+        "id": "c2",
+        "label": "AI-Assisted Visualization Studio",
+        "description": "Building interactive HTML tools for universities and NGOs (zero-backend, client-side only)"
+      },
+      {
+        "id": "c3",
+        "label": "Code Atlas Project",
+        "description": "Graph-based visualization layer for navigating AI-generated codebases"
+      }
+    ]
+  },
+
+  "party_b_constellation": {
+    "party": "Kellen Sanger (SOPHiA GENETICS)",
+    "status": "INFERRED — to be validated or replaced with actual input",
+    "mental_models": [
+      {
+        "id": "neutral_intelligence",
+        "label": "Neutral Intelligence Layer",
+        "description": "SOPHiA DDM as platform-agnostic intelligence across genomics, imaging, and clinical data",
+        "note": "INFERRED from company positioning"
+      },
+      {
+        "id": "data_network_effects",
+        "label": "Data Network Effects",
+        "description": "Value compounds as more hospitals contribute multimodal data to the platform",
+        "note": "INFERRED from business model"
+      },
+      {
+        "id": "clinical_integration",
+        "label": "Clinical Workflow Integration",
+        "description": "AI outputs must fit seamlessly into existing hospital and lab workflows",
+        "note": "INFERRED from product requirements"
+      }
+    ],
+    "tensions": [
+      {
+        "id": "accuracy-vs-adoption",
+        "label": "Accuracy vs. Adoption",
+        "description": "High model performance doesn't guarantee clinical adoption if the interface is complex"
+      },
+      {
+        "id": "research-vs-product",
+        "label": "Research Velocity vs. Product Stability",
+        "description": "Balancing cutting-edge AI research with reliable, production-grade clinical tools"
+      },
+      {
+        "id": "heterogeneity",
+        "label": "Hospital System Heterogeneity",
+        "description": "Scaling across diverse IT infrastructures, workflows, and regulatory environments"
+      },
+      {
+        "id": "trust-explainability",
+        "label": "Trust Through Explainability",
+        "description": "Clinicians need to understand *why* the AI flagged something, not just *that* it did"
+      }
+    ],
+    "questions": [
+      {
+        "id": "q1",
+        "label": "How do we make multimodal insights actionable in clinical decision-making?",
+        "connects_to": ["tensions/accuracy-vs-adoption"]
+      },
+      {
+        "id": "q2",
+        "label": "What does 'AI enablement' mean when rollout is already progressing well?",
+        "connects_to": ["mental_models/clinical_integration"]
+      },
+      {
+        "id": "q3",
+        "label": "How do we align research, engineering, and product teams around usability?",
+        "connects_to": ["tensions/research-vs-product"]
+      }
+    ],
+    "context": [
+      {
+        "id": "c1",
+        "label": "SOPHiA DDM Platform",
+        "description": "Cloud-based SaaS for multimodal healthcare data analysis"
+      },
+      {
+        "id": "c2",
+        "label": "AI Rollout Progressing Well",
+        "description": "Technical deployment successful, but ongoing questions about adoption depth"
+      },
+      {
+        "id": "c3",
+        "label": "Strategy & AI Enablement Role",
+        "description": "Kellen's mandate: help organization maximize AI value across functions"
+      }
+    ]
+  },
+
+  "cross_party_connections": {
+    "status": "MANUAL MAPPING — to be replaced with LLM-generated semantic analysis in future",
+    "high_strength_links": [
+      {
+        "source": "achim/interface",
+        "target": "kellen/accuracy-vs-adoption",
+        "strength": 0.9,
+        "rationale": "Both focus on usability gap in AI systems"
+      },
+      {
+        "source": "achim/capability-vs-trust",
+        "target": "kellen/trust-explainability",
+        "strength": 0.95,
+        "rationale": "Direct overlap on trust-building mechanisms"
+      },
+      {
+        "source": "achim/multimodal-vs-fragmented",
+        "target": "kellen/q1",
+        "strength": 0.85,
+        "rationale": "Shared challenge of multimodal integration"
+      },
+      {
+        "source": "achim/triangle",
+        "target": "kellen/q3",
+        "strength": 0.8,
+        "rationale": "Cross-functional alignment = change management problem"
+      },
+      {
+        "source": "achim/neutrality-vs-action",
+        "target": "kellen/neutral_intelligence",
+        "strength": 0.75,
+        "rationale": "Platform neutrality as strategic tension"
+      }
+    ],
+    "medium_strength_links": [
+      {
+        "source": "achim/model-vs-workflow",
+        "target": "kellen/clinical_integration",
+        "strength": 0.7,
+        "rationale": "Workflow reality vs. model capability"
+      },
+      {
+        "source": "achim/data-vs-bandwidth",
+        "target": "kellen/heterogeneity",
+        "strength": 0.65,
+        "rationale": "Information overload across diverse contexts"
+      },
+      {
+        "source": "achim/serendipity",
+        "target": "kellen/data_network_effects",
+        "strength": 0.6,
+        "rationale": "Discovery-driven exploration vs. compounding data value"
+      }
+    ]
+  },
+
+  "spatial_positioning_logic": {
+    "party_a_anchor": "Left-of-center (x: 35% of viewport width)",
+    "party_b_anchor": "Right-of-center (x: 65% of viewport width)",
+    "collision_zone": "Center (x: 50%, radius ~20% of viewport)",
+    "high_connection_nodes": "Migrate toward collision zone (stronger links = closer to center)",
+    "low_connection_nodes": "Stay at party edges (unexplored territory)",
+    "physics": "D3 force simulation with link distance inversely proportional to connection strength"
+  },
+
+  "technical_stack": {
+    "format": "Single HTML file, self-contained",
+    "dependencies": [
+      "D3.js v7 (CDN)",
+      "Google Fonts: Plus Jakarta Sans, JetBrains Mono"
+    ],
+    "backend": "None (zero backend, client-side only)",
+    "data_format": "Embedded JSON in <script> tag",
+    "deployment": "Open in browser, no build step"
+  },
+
+  "future_roadmap": {
+    "phase_2_llm_onboarding": {
+      "description": "Each party generates their own constellation via LLM before meeting",
+      "input": "Meeting context + role + priorities",
+      "output": "Structured JSON uploaded to collision interface"
+    },
+    "phase_3_auto_collision": {
+      "description": "Meta-LLM analyzes both JSONs and auto-generates connection graph",
+      "tasks": [
+        "Semantic similarity scoring between nodes",
+        "Cross-party link generation",
+        "Collision zone identification",
+        "HTML output with merged visualization"
+      ]
+    },
+    "phase_4_template_library": {
+      "description": "Reusable templates for different meeting types",
+      "examples": [
+        "Consulting intake meetings",
+        "Networking / exploratory conversations",
+        "Internal cross-functional alignment",
+        "Workshop preparation"
+      ]
+    },
+    "phase_5_real_time_collaboration": {
+      "description": "Both parties navigate the collision space simultaneously during the call",
+      "features": [
+        "Shared cursor/pointer",
+        "Live node highlighting",
+        "Real-time annotation"
+      ]
+    }
+  },
+
+  "open_questions": {
+    "oq1": {
+      "question": "Should Kellen's constellation be inferred (Achim generates) or should we simulate dual-party onboarding?",
+      "status": "DECISION NEEDED",
+      "blocks": "Content finalization"
+    },
+    "oq2": {
+      "question": "Connection strength calculation: manual mapping or keyword-based auto-similarity?",
+      "status": "DECISION NEEDED",
+      "blocks": "Graph structure finalization"
+    },
+    "oq3": {
+      "question": "Detail panel behavior: single shared panel (center) or dual panels (left/right)?",
+      "status": "LEANING TOWARD dual panels for clarity",
+      "blocks": "UI layout"
+    },
+    "oq4": {
+      "question": "Node label visibility: always-on or hover-only?",
+      "status": "LEANING TOWARD always-on for first-glance clarity",
+      "blocks": "Visual density tuning"
+    }
+  },
+
+  "strategic_principles": [
+    "Anschauung — visual form must performatively communicate conceptual function",
+    "Collision not canvas — two perspectives merging, not one person presenting",
+    "Serendipity-driven navigation — where nodes glow brightest = where conversation should start",
+    "Modular onboarding — future vision is dual LLM generation, prototype is manual authoring",
+    "Template reusability — this pattern works for any exploratory meeting, not just SOPHiA"
+  ],
+
+  "meta": {
+    "last_updated": "2026-03-17",
+    "updated_by": "Navigator session (Achim + Claude)",
+    "next_action": "Resolve open questions OQ1-OQ4, then build prototype HTML",
+    "meeting_deadline": "Wednesday 2026-03-18, 09:30 ET",
+    "format_version": "1.0"
+  }
+}
