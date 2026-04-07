@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Hub — meet-collide</title>
+  <!-- Inter font — loaded as link for correct cascade order; gracefully falls back to system fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+/* ── Design tokens ───────────────────────────────────────────────── */
+:root {
+  --nav-h: 52px;
+  --sb-w:  220px;
+  --rp-w:  272px;
+  --bg:          #F5F5F7;
+  --surface:     #FFFFFF;
+  --surface-2:   #FAFAFA;
+  --border:      rgba(0,0,0,.07);
+  --border-md:   rgba(0,0,0,.11);
+  --text-1: #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #AEAEB2;
+  --accent:      #0071E3;
+  --accent-bg:   #EBF3FF;
+  --prep-c:  #5856D6; --prep-bg:  #EEEEFF;
+  --live-c:  #007AFF; --live-bg:  #E5F0FF;
+  --res-c:   #30A046; --res-bg:   #E6F4EA;
+  --warn-c:  #B45309; --warn-bg:  #FFF5E0;
+  --shadow-card: 0 1px 3px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.05);
+  --shadow-up:   0 4px 14px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.05);
+  --r:  10px;
+  --rs: 6px;
+}
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px; line-height: 1.55;
+  background: var(--bg); color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SVG icons ─────────────────────────────────────────────────── */
+.icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; vertical-align:middle; }
+.icon svg { display:block; }
+
+/* ── Top Nav ───────────────────────────────────────────────────── */
+#topnav {
+  position: sticky; top: 0; z-index: 200;
+  height: var(--nav-h);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-md);
+  display: flex; align-items: center; padding: 0 14px; gap: 10px;
+}
+.nav-divider { width:1px; height:18px; background:var(--border-md); flex-shrink:0; }
+
+/* ── Layout ────────────────────────────────────────────────────── */
+#app-layout {
+  display: grid;
+  grid-template-columns: var(--sb-w) 1fr var(--rp-w);
+  min-height: calc(100vh - var(--nav-h));
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────── */
+#sidebar {
+  position: sticky; top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto; padding: 12px 10px;
+  border-right: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.sb-group { font-size: 10px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; color: var(--text-3); padding: 10px 8px 3px; }
+.sb-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: var(--rs);
+  cursor: pointer; font-size: 12px; color: var(--text-2);
+  transition: background .1s, color .1s; user-select: none;
+}
+.sb-item:hover { background: rgba(0,0,0,.04); color: var(--text-1); }
+.sb-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+.sb-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-left:auto; }
+
+/* ── Workspace ─────────────────────────────────────────────────── */
+#workspace { padding: 20px 22px; overflow-y: auto; }
+
+/* ── Section cards ─────────────────────────────────────────────── */
+.s-card {
+  background: var(--surface); border-radius: var(--r);
+  box-shadow: var(--shadow-card); margin-bottom: 10px; overflow: hidden;
+  transition: opacity .25s ease, box-shadow .15s;
+}
+.s-card:hover { box-shadow: var(--shadow-up); }
+.s-card.deemph { opacity: .42; }
+.s-card.deemph:hover { opacity: .85; }
+.s-header {
+  display: flex; align-items: center; gap: 7px;
+  padding: 11px 14px; cursor: pointer; user-select: none;
+  transition: background .1s;
+}
+.s-header:hover { background: rgba(0,0,0,.02); }
+.s-chev { transition: transform .15s; flex-shrink:0; }
+.s-card.expanded .s-chev { transform: rotate(90deg); }
+.s-title { flex: 1; font-size: 13px; font-weight: 600; }
+.s-body { display: none; padding: 2px 14px 16px; }
+.s-card.expanded .s-body { display: block; }
+
+/* ── Phase badges ──────────────────────────────────────────────── */
+.pbadge { font-size: 10px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; }
+.pbadge.prep    { background: var(--prep-bg);  color: var(--prep-c); }
+.pbadge.live    { background: var(--live-bg);  color: var(--live-c); }
+.pbadge.results { background: var(--res-bg);   color: var(--res-c);  }
+
+/* ── Phase switch ──────────────────────────────────────────────── */
+.phase-rail { display: flex; align-items: center; background: #EDEDF0; padding: 3px; border-radius: 22px; gap: 2px; }
+.ph-btn { padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; background: transparent; color: var(--text-2); transition: all .15s; font-family:inherit; }
+.ph-btn:hover { background: rgba(255,255,255,.7); color: var(--text-1); }
+.ph-btn.on-prep    { background:#fff; color:var(--prep-c);  box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+.ph-btn.on-live    { background:#fff; color:var(--live-c);  box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+.ph-btn.on-results { background:#fff; color:var(--res-c);   box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 12px; border-radius: var(--rs);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border-md); background: var(--surface);
+  color: var(--text-1); transition: background .1s; white-space: nowrap;
+  font-family: inherit;
+}
+.btn:hover { background: var(--bg); }
+.btn-sm   { padding: 3px 9px;  font-size: 11px; }
+.btn-xs   { padding: 2px 7px;  font-size: 11px; }
+.btn-primary { background: var(--accent); color:#fff; border-color:transparent; }
+.btn-primary:hover { background:#0077ED; }
+.btn-ghost { background:transparent; border-color:transparent; color:var(--accent); }
+.btn-ghost:hover { background: var(--accent-bg); }
+.btn-del { background:transparent; border-color:transparent; color:var(--text-3); padding:2px 5px; }
+.btn-del:hover { color:#FF3B30; background:#FFF0EF; }
+
+/* ── Form fields ───────────────────────────────────────────────── */
+.fl { font-size:11px; font-weight:500; color:var(--text-2); margin-bottom:3px; }
+.fi, .fta, .fsel {
+  width:100%; background:var(--bg); border:1px solid transparent;
+  border-radius:var(--rs); padding:6px 9px;
+  font-family:inherit; font-size:13px; color:var(--text-1);
+  transition:border-color .15s, background .15s; outline:none;
+}
+.fi:focus, .fta:focus, .fsel:focus { background:var(--surface); border-color:var(--accent); }
+.fi-sm { padding:4px 8px; font-size:12px; }
+.fta { resize:vertical; min-height:68px; }
+.fta-sm { min-height:52px; }
+.fsel {
+  cursor:pointer; appearance:none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23AEAEB2'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 9px center; padding-right:28px;
+}
+
+/* ── Persona cards ─────────────────────────────────────────────── */
+.pcard { background:#F9F9FB; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px; }
+.pavatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
+
+/* ── Tag chips ─────────────────────────────────────────────────── */
+.tc { display:inline-flex; align-items:center; gap:2px; background:#E8E8ED; border-radius:20px; padding:2px 8px; font-size:11px; font-weight:500; color:#3A3A3C; margin:2px 2px 2px 0; }
+.tc-rm { cursor:pointer; background:none; border:none; padding:0; color:#8E8E93; font-size:13px; line-height:1; display:flex; align-items:center; transition:color .1s; }
+.tc-rm:hover { color:#FF3B30; }
+.ta-inp { border:none; background:transparent; outline:none; font-size:11px; color:var(--accent); width:90px; font-family:inherit; }
+.ta-inp::placeholder { color:var(--text-3); }
+
+/* ── List item rows ─────────────────────────────────────────────── */
+.li { background:var(--bg); border:1px solid var(--border); border-radius:7px; padding:8px 10px; margin-bottom:6px; }
+.li.focus-ring { outline:2px solid var(--live-c); outline-offset:-2px; }
+
+/* ── CF colors ─────────────────────────────────────────────────── */
+.cf-overlap    { color:#30B0C7; }
+.cf-diff       { color:#8E8E93; }
+.cf-tension    { color:#FF6B35; }
+.cf-opportunity{ color:var(--res-c); }
+.cf-question   { color:var(--prep-c); }
+
+/* ── Status badges ─────────────────────────────────────────────── */
+.sb-open        { display:inline-flex; align-items:center; padding:1px 8px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; background:var(--warn-bg); color:var(--warn-c); }
+.sb-in_progress { display:inline-flex; align-items:center; padding:1px 8px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; background:var(--live-bg); color:var(--live-c); }
+.sb-done        { display:inline-flex; align-items:center; padding:1px 8px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; background:var(--res-bg);  color:var(--res-c); }
+
+/* ── Right panel ───────────────────────────────────────────────── */
+#right-panel {
+  position:sticky; top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));
+  overflow-y:auto; padding:14px 13px;
+  border-left:1px solid var(--border);
+  background:var(--surface-2);
+}
+.aw-label { font-size:10px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--text-3); margin-bottom:3px; }
+.aw-val   { font-size:12px; color:#3A3A3C; line-height:1.45; }
+.aw-row   { padding:9px 0; border-bottom:1px solid var(--border); }
+.aw-row:last-of-type { border-bottom:none; }
+.qcap { width:100%; background:var(--surface); border:1px solid var(--border-md); border-radius:8px; padding:8px 10px; font-family:inherit; font-size:12px; color:var(--text-1); resize:none; min-height:90px; outline:none; transition:border-color .15s; }
+.qcap:focus { border-color:var(--accent); }
+
+/* ── Meeting type badge ─────────────────────────────────────────── */
+.mt-badge { font-size:10px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; padding:2px 8px; border-radius:20px; background:#EDEDF0; color:var(--text-2); }
+
+/* ── Misc ───────────────────────────────────────────────────────── */
+.divh { height:1px; background:var(--border); margin:10px 0; }
+.empty-st { text-align:center; padding:16px 0; color:var(--text-3); font-size:12px; }
+.link-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.link-row .fi { flex:1; }
+.subsec-head { font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+
+/* ── Toast ──────────────────────────────────────────────────────── */
+#toast {
+  position:fixed; bottom:22px; left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:rgba(20,20,20,.82); color:#fff;
+  padding:7px 16px; border-radius:22px; font-size:12px; font-weight:500;
+  opacity:0; transition:opacity .2s, transform .2s;
+  pointer-events:none; z-index:9999;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── Scrollbars ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:rgba(0,0,0,.14); border-radius:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width:1000px) {
+  :root { --rp-w:0px; }
+  #right-panel { display:none; }
+  #app-layout  { grid-template-columns: var(--sb-w) 1fr; }
+}
+@media (max-width:640px) {
+  #app-layout { grid-template-columns:1fr; }
+  #sidebar    { display:none; }
+  #workspace  { padding:12px 14px; }
+}
+  </style>
+</head>
+<body>
+
+<!-- ── Top Navigation ────────────────────────────────────────────── -->
+<nav id="topnav">
+  <span class="icon" style="color:var(--accent)">ICON_HUB_20</span>
+  <span style="font-weight:700;font-size:14px;white-space:nowrap">Meeting Hub</span>
+  <div class="nav-divider"></div>
+  <span id="nav-title" style="font-size:13px;font-weight:500;color:#3A3A3C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;flex:1"></span>
+  <span id="nav-type" class="mt-badge" style="flex-shrink:0"></span>
+
+  <div class="phase-rail" style="flex-shrink:0">
+    <button class="ph-btn" id="pb-prep"    onclick="setPhase('prep')">Prep</button>
+    <button class="ph-btn" id="pb-live"    onclick="setPhase('live')">Live</button>
+    <button class="ph-btn" id="pb-results" onclick="setPhase('results')">Results</button>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+    <button class="btn btn-sm" onclick="resetToDemo()">ICON_RESET Reset</button>
+    <button class="btn btn-sm" onclick="exportJSON()">ICON_DOWN Export</button>
+    <button class="btn btn-sm" onclick="triggerImport()">ICON_UP Import</button>
+    <button class="btn btn-sm" onclick="exportMarkdown()" title="Export Markdown Summary">ICON_DOC</button>
+  </div>
+</nav>
+
+<input type="file" id="import-input" accept=".json" style="display:none">
+
+<!-- ── App Layout ────────────────────────────────────────────────── -->
+<div id="app-layout">
+  <aside id="sidebar"><div id="sb-nav"></div></aside>
+  <main id="workspace"><div id="ws-content"></div></main>
+  <aside id="right-panel"><div id="rp-content"></div></aside>
+</div>
+
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ── Inline SVG icon system ─────────────────────────────────────── */
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svg(paths, size=16, extra='') {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ${extra}>${paths}</svg>`;
+}
+// icon() returns an inline SVG string for use in innerHTML
+const IC = {
+  hub:        () => svg(`<circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="2" r="1.2"/><circle cx="14" cy="5" r="1.2"/><circle cx="14" cy="11" r="1.2"/><circle cx="8" cy="14" r="1.2"/><circle cx="2" cy="11" r="1.2"/><circle cx="2" cy="5" r="1.2"/><line x1="8" y1="5.5" x2="8" y2="3.2"/><line x1="10.3" y1="6.7" x2="12.8" y2="5.4"/><line x1="10.3" y1="9.3" x2="12.8" y2="10.6"/><line x1="8" y1="10.5" x2="8" y2="12.8"/><line x1="5.7" y1="9.3" x2="3.2" y2="10.6"/><line x1="5.7" y1="6.7" x2="3.2" y2="5.4"/>`),
+  frame:      () => svg(`<rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 2v12M2 5h3M2 9h3"/>`),
+  people:     () => svg(`<circle cx="6" cy="5" r="2"/><path d="M1 14c0-3 2.3-5 5-5"/><circle cx="11" cy="5" r="2"/><path d="M10 9c2.7 0 5 2 5 5"/>`),
+  link:       () => svg(`<path d="M10 6l-4 4M7 4l1.5-1.5A3 3 0 0112.7 6.7L11 8.3M9 11.7l-1.3 1.3a3 3 0 01-4.2-4.2L5 7.4"/>`),
+  checklist:  () => svg(`<path d="M6 4h8M6 8h8M6 12h5"/><polyline points="2 4.5 3.5 6 6 3.5"/><polyline points="2 8.5 3.5 10 6 7.5"/>`),
+  forum:      () => svg(`<path d="M13 3H3a1 1 0 00-1 1v6a1 1 0 001 1h1v3l3-3h6a1 1 0 001-1V4a1 1 0 00-1-1z"/>`),
+  edit_note:  () => svg(`<path d="M2 12.5V14h1.5l6-6L8 6.5l-6 6zM13 4a1 1 0 010 1.4l-1 1L10.6 5 11.6 4A1 1 0 0113 4z"/><path d="M2 4h5M2 7h3M2 10h2"/>`),
+  lightbulb:  () => svg(`<path d="M6 14h4M6.5 11.5c-.3-1-.5-1.8-.5-2.5a4 4 0 018 0c0 .7-.2 1.5-.5 2.5"/><path d="M6.5 11.5h5a1 1 0 010 2h-5a1 1 0 010-2z"/>`),
+  parking:    () => svg(`<rect x="2" y="2" width="12" height="12" rx="2"/><text x="5" y="12" font-size="8" font-weight="700" fill="currentColor" stroke="none">P</text>`),
+  insights:   () => svg(`<circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>`),
+  task_alt:   () => svg(`<circle cx="8" cy="8" r="6"/><polyline points="5.5 8 7 9.5 10.5 6"/>`),
+  close:      () => svg(`<line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/>`),
+  add:        () => svg(`<line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/>`),
+  chevron:    () => svg(`<polyline points="6 12 10 8 6 4"/>`),
+  trash:      () => svg(`<polyline points="3 5 5 5 13 5"/><path d="M6 5V4a1 1 0 011-1h2a1 1 0 011 1v1"/><path d="M4.5 5l.7 8a1 1 0 001 .9h3.6a1 1 0 001-.9l.7-8"/>`),
+  person_add: () => svg(`<circle cx="7" cy="5" r="2.5"/><path d="M2 14c0-3 2.2-5 5-5s5 2 5 5"/><path d="M12 6v4M14 8h-4"/>`),
+  add_link:   () => svg(`<path d="M7 9H5a3 3 0 010-6h3M9 7h2a3 3 0 010 6h-3"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>`),
+  add_comment:() => svg(`<path d="M13 2H3a1 1 0 00-1 1v7a1 1 0 001 1h1v3l3-3h6a1 1 0 001-1V3a1 1 0 00-1-1z"/><line x1="8" y1="6" x2="8" y2="8"/><line x1="6" y1="7" x2="10" y2="7"/>`),
+  description:() => svg(`<path d="M10 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V5L10 2z"/><polyline points="10 2 10 5 13 5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/>`),
+  schedule:   () => svg(`<circle cx="8" cy="8" r="6"/><polyline points="8 5 8 8 10.5 8"/>`),
+  radio_on:   () => svg(`<circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5" fill="currentColor" stroke="none"/>`),
+  radio_off:  () => svg(`<circle cx="8" cy="8" r="6"/>`),
+  overlap:    () => svg(`<circle cx="6" cy="8" r="4" stroke-opacity=".6"/><circle cx="10" cy="8" r="4" stroke-opacity=".6"/>`),
+  compare:    () => svg(`<line x1="8" y1="3" x2="8" y2="13"/><polyline points="5 6 2 8 5 10"/><polyline points="11 6 14 8 11 10"/>`),
+  bolt:       () => svg(`<polyline points="9 2 4 9 8 9 7 14 12 7 8 7 9 2"/>`),
+  rocket:     () => svg(`<path d="M9 3S12 3 13 7C11 8 9 8 9 8S7 8 5 7C6 3 9 3 9 3z"/><path d="M5 7l-2 5h3l1-2h2l1 2h3L11 7"/><circle cx="9" cy="6" r="1" fill="currentColor" stroke="none"/>`),
+  help:       () => svg(`<circle cx="8" cy="8" r="6"/><path d="M6.5 6.5a2 2 0 012.5-1.3c1 .3 1.5 1.3 1 2.2C9.5 8.2 8 8.8 8 10"/><circle cx="8" cy="12.5" r=".5" fill="currentColor" stroke="none"/>`),
+  gavel:      () => svg(`<path d="M3 13l7-7"/><path d="M5.5 3.5l3 3 1.5-1.5-3-3z"/><path d="M8.5 6.5l3 3 1.5-1.5-3-3z"/><line x1="2" y1="14" x2="4" y2="12"/>`),
+  handshake:  () => svg(`<path d="M2 9l3-3h3l1-1h3l3 3"/><path d="M2 9l4 4h2l4-4"/><path d="M8 9l2-2"/>`),
+  sticky:     () => svg(`<rect x="2" y="2" width="12" height="12" rx="1"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="5" y1="2" x2="5" y2="7"/>`),
+  restart:    () => svg(`<path d="M12 8A4 4 0 014 8"/><polyline points="2 6 4 8 6 6"/><path d="M4 8a4 4 0 018 0"/>`),
+  download:   () => svg(`<path d="M8 3v7M5 7l3 3 3-3"/><path d="M3 13h10"/>`),
+  upload:     () => svg(`<path d="M8 13V6M5 9l3-3 3 3"/><path d="M3 13h10"/>`),
+  doc:        () => svg(`<path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V5z"/><polyline points="9 2 9 5 12 5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="8" y2="10"/>`),
+};
+
+function icon(name, size=16, color='') {
+  const fn = IC[name];
+  if (!fn) return `<span style="font-size:11px;color:var(--text-3)">${name}</span>`;
+  const raw = fn().replace('<svg ', `<svg style="width:${size}px;height:${size}px;flex-shrink:0${color?';color:'+color:''};" `);
+  return `<span class="icon">${raw}</span>`;
+}
+
+// Replace placeholder text in nav buttons with icons (after DOM loads)
+function injectNavIcons() {
+  document.querySelector('[onclick="resetToDemo()"]').innerHTML = `${icon('restart',13)} Reset`;
+  document.querySelector('[onclick="exportJSON()"]').innerHTML  = `${icon('download',13)} Export`;
+  document.querySelector('[onclick="triggerImport()"]').innerHTML = `${icon('upload',13)} Import`;
+  document.querySelector('[onclick="exportMarkdown()"]').innerHTML = icon('doc',13);
+  document.querySelector('#topnav .icon').outerHTML = icon('hub',20,'var(--accent)');
+}
+
+/* ── Section definitions ────────────────────────────────────────── */
+const SECTIONS = [
+  { id:'frame',         label:'Meeting Frame',   iconKey:'frame',      phase:'prep',    group:'PREPARE' },
+  { id:'personas',      label:'Personas',         iconKey:'people',     phase:'prep',    group:'PREPARE' },
+  { id:'resources',     label:'Resources',        iconKey:'link',       phase:'prep',    group:'PREPARE' },
+  { id:'collision_field',label:'Collision Field', iconKey:'hub',        phase:'prep',    group:'PREPARE' },
+  { id:'agenda',        label:'Agenda',           iconKey:'checklist',  phase:'prep',    group:'PREPARE' },
+  { id:'contributions', label:'Contributions',    iconKey:'add_comment',phase:'live',    group:'LIVE'    },
+  { id:'live_notes',    label:'Live Notes',       iconKey:'edit_note',  phase:'live',    group:'LIVE'    },
+  { id:'idea_space',    label:'Idea Space',       iconKey:'lightbulb',  phase:'live',    group:'LIVE'    },
+  { id:'parking_lot',   label:'Parking Lot',      iconKey:'parking',    phase:'live',    group:'LIVE'    },
+  { id:'results',       label:'Results',          iconKey:'insights',   phase:'results', group:'RESULTS' },
+  { id:'actions',       label:'Actions',          iconKey:'task_alt',   phase:'results', group:'RESULTS' },
+];
+
+const PHASE_SECTIONS = {
+  prep:    ['frame','personas','resources','collision_field','agenda'],
+  live:    ['contributions','live_notes','idea_space','parking_lot'],
+  results: ['results','actions'],
+};
+
+const AVATAR_COLORS = ['#5856D6','#30B0C7','#FF6B35','#30A046','#8E44AD','#D4AC0D'];
+
+/* ── Demo Data ──────────────────────────────────────────────────── */
+// state.meeting IS the flat meeting object (no nested 'meeting:' key)
+const DEMO_MTG = {
+  title:            "Exploratory Alignment: AI in Healthcare Strategy",
+  date:             "2026-03-18",
+  time:             "09:30 ET / 15:30 CET",
+  duration_minutes: 40,
+  meeting_type:     "1:1",
+  goal:             "Explore strategic overlap between Achim's organizational change management expertise and Kellen's AI Enablement mandate at SOPHiA GENETICS. Identify where frameworks can translate and where genuine tension exists.",
+  context:          "Meeting originated from a mutual LinkedIn connection in the healthtech space. Achim is currently in the IMD Change Management Program and has been building AI-assisted visualization tools for universities and NGOs. Kellen's team has successfully deployed AI in multiple hospital networks but is seeing adoption plateau at ~40% active usage.",
+  desired_outcome:  "Identify 2–3 concrete collaboration angles. Understand SOPHiA's adoption friction points at depth. Establish cadence for ongoing dialogue.",
+  personas: [
+    {
+      id:"p1", name:"Achim Imboden", role:"Senior Expert Change Management",
+      background:"Organizational change management specialist focused on AI adoption, human–AI interaction, and business transformation. Currently enrolled in IMD Change Management Program. Building AI-assisted visualization tools for universities and NGOs.",
+      interests:["Change Management","AI Adoption","Human–AI Interaction","Visualization","Serendipity-Driven Design"],
+      expectations:["Explore collaboration potential","Learn about clinical AI deployment challenges","Share change management frameworks"],
+      angle:"The interface is the leverage point — AI adoption fails not at the model level but at the human–machine interface. I want to understand how SOPHiA navigates this.",
+      links:[{ label:"IMD Program", url:"https://www.imd.org" },{ label:"Code Atlas Project", url:"#" }]
+    },
+    {
+      id:"p2", name:"Kellen Sanger", role:"VP, Head of Strategy & AI Enablement",
+      background:"Senior strategy and AI leader at SOPHiA GENETICS. Responsible for AI enablement across the organization, aligning research, engineering, and clinical product teams. Based in US (ET timezone).",
+      interests:["Healthcare AI Strategy","Clinical AI Adoption","Multimodal Data Analysis","Platform Strategy","AI Enablement"],
+      expectations:["Understand external perspectives on AI adoption challenges","Explore strategic alignment opportunities","Validate internal AI enablement approach"],
+      angle:"SOPHiA's AI rollout is technically progressing, but the deeper challenge is turning AI outputs into clinical decision-making tools that practitioners actually trust and use.",
+      links:[{ label:"SOPHiA GENETICS", url:"https://www.sophiagenetics.com" },{ label:"SOPHiA DDM Platform", url:"https://www.sophiagenetics.com/platform/" }]
+    }
+  ],
+  resources: {
+    links:[
+      { id:"rl1", label:"SOPHiA GENETICS Platform Overview", url:"https://www.sophiagenetics.com/platform/", note:"Background reading on SOPHiA DDM" },
+      { id:"rl2", label:"IMD AI Leadership Program", url:"https://www.imd.org/research-knowledge/digital/articles/ai-leadership/", note:"Relevant framework context" }
+    ],
+    documents:[
+      { id:"rd1", title:"Stellar Collision Project Doc", type:"JSON Concept", note:"Internal meeting framework used to prepare this session" },
+      { id:"rd2", title:"SOPHiA GENETICS Annual Report 2025", type:"PDF", note:"Background on company strategy and financials" }
+    ],
+    notes:[
+      { id:"rn1", text:"Meeting originated from LinkedIn connection — warm intro through mutual contact in healthtech space." },
+      { id:"rn2", text:"Kellen's team has successfully deployed AI in 3 hospital networks but is seeing adoption plateau at ~40% active usage." }
+    ]
+  },
+  collision_field: {
+    overlap:["Both focused on making AI outputs actionable in real-world contexts","Shared concern: technical capability outpaces human usability","Trust-building as the central challenge in AI adoption","Interface design as the key leverage point"],
+    differences:["Achim: generalist change management vs. Kellen: deep clinical domain expertise","External consultant perspective vs. internal organizational actor","Research/exploration mindset vs. production-grade deployment pressure"],
+    tensions:["Platform neutrality (SOPHiA) vs. opinionated workflow guidance (Change Management)","Scalable platform logic vs. context-specific adoption needs","Data richness vs. cognitive bandwidth of clinicians"],
+    opportunities:["Co-develop AI adoption playbook for clinical settings","Human–AI interface design consultation for SOPHiA DDM","Research collaboration on change management in precision medicine","Workshop design for clinical AI onboarding"],
+    open_questions:["What does 40% adoption mean — success threshold or warning signal?","Where does adoption friction actually occur — technical, interface, or cultural?","Can a generalist change framework translate directly to clinical workflow specifics?","What is the real definition of 'AI Enablement' at SOPHiA vs. adjacent roles?"]
+  },
+  agenda: {
+    items:[
+      { id:"ag1", topic:"Introductions & Context Setting", owner:"Achim",  timebox:5,  notes:"Brief background from both sides; establish mutual understanding of roles", current_focus:false },
+      { id:"ag2", topic:"SOPHiA's AI Enablement Landscape", owner:"Kellen", timebox:10, notes:"Where are you in the AI journey? What's working, what's not?", current_focus:true  },
+      { id:"ag3", topic:"Change Management Lens on Clinical AI", owner:"Achim",  timebox:10, notes:"Framework: Working Triangle (Change Mgmt × AI × Business Reality)", current_focus:false },
+      { id:"ag4", topic:"Collision Zone: Overlap & Tension Exploration", owner:"Both",   timebox:10, notes:"What resonates? What creates productive friction?", current_focus:false },
+      { id:"ag5", topic:"Next Steps & Follow-up", owner:"Both", timebox:5, notes:"Concrete actions, potential collaboration paths", current_focus:false }
+    ]
+  },
+  contributions:[
+    { id:"co1", author:"Achim",  entry_type:"resource", content:"Interface as Leverage framework — the next UX paradigm isn't about better prompts but better surfaces to explore AI-generated possibility spaces." },
+    { id:"co2", author:"Kellen", entry_type:"question", content:"How do we distinguish between adoption friction that's fixable vs. friction that tells us the product isn't right?" },
+    { id:"co3", author:"Achim",  entry_type:"idea",     content:"What if we mapped the SOPHiA adoption journey as a constellation — where are nodes of high trust vs. high uncertainty?" }
+  ],
+  live_notes:[
+    { id:"ln1", timestamp:"09:32 ET", note:"Kellen confirmed: technical deployment is solid; the challenge is now depth of use, not breadth of rollout." },
+    { id:"ln2", timestamp:"09:38 ET", note:"Key insight: SOPHiA positions as neutral intelligence platform — but neutrality without clear action pathways creates decision paralysis." },
+    { id:"ln3", timestamp:"09:44 ET", note:"Both agreed: trust is not built through accuracy alone but through explainability, predictability, and user control." }
+  ],
+  idea_space:[
+    { id:"id1", title:"Clinical AI Adoption Playbook",  description:"Co-develop a structured framework for moving clinical teams from AI awareness to embedded practice. Based on Achim's triangle model adapted for healthcare.", owner:"Achim + Kellen", potential:"High — addresses core gap in SOPHiA's current approach" },
+    { id:"id2", title:"SOPHiA Interface Audit",          description:"External review of SOPHiA DDM from a human–AI interaction perspective. Identify friction points in the user journey that aren't visible from inside.", owner:"Achim",          potential:"Medium — depends on SOPHiA's appetite for external input" },
+    { id:"id3", title:"Serendipity Mode Feature",        description:"Add a discovery-oriented navigation mode to SOPHiA DDM — users explore AI outputs spatially rather than linearly. Reduces cognitive overload.", owner:"Joint concept",  potential:"High — directly addresses data richness vs. bandwidth tension" }
+  ],
+  parking_lot:[
+    { id:"pk1", item:"SOPHiA's GDPR and data governance approach for multi-hospital data", reason:"Important for collaboration scoping but too deep to explore now", owner:"Kellen" },
+    { id:"pk2", item:"Achim's Code Atlas project — potential SOPHiA use case?",            reason:"Interesting tangent but needs a separate dedicated call", owner:"Achim" }
+  ],
+  results:{
+    decisions:["Schedule a focused follow-up call to explore the Adoption Playbook idea in depth","Achim to prepare a one-page framework proposal based on the Working Triangle model"],
+    insights:["SOPHiA's primary challenge has shifted from deployment to depth-of-adoption","Trust in clinical AI requires a three-part formula: accuracy + explainability + user control","Change management frameworks can transfer to clinical AI contexts with targeted adaptation","Interface design is the underinvested leverage point in healthcare AI rollout"],
+    agreements:["Both parties see a real collaboration opportunity in the adoption playbook space","Monthly check-in call to be established as ongoing dialogue cadence","Kellen to share internal adoption metrics and friction data for framework design"]
+  },
+  actions:[
+    { id:"ac1", task:"Prepare Working Triangle framework proposal (1-page)", owner:"Achim",  deadline:"2026-03-25", status:"open"        },
+    { id:"ac2", task:"Share SOPHiA adoption metrics and anonymized friction report",         owner:"Kellen", deadline:"2026-03-25", status:"open"        },
+    { id:"ac3", task:"Schedule follow-up call for Adoption Playbook deep dive",              owner:"Achim",  deadline:"2026-03-21", status:"in_progress" },
+    { id:"ac4", task:"Review Stellar Collision interface concept and share feedback",         owner:"Kellen", deadline:"2026-03-28", status:"open"        }
+  ]
+};
+
+const DEMO_UI = {
+  phase: "prep",
+  expanded_sections: ["frame","personas","resources","collision_field","agenda"],
+  active_section: "frame",
+  quick_capture: ""
+};
+
+/* ── State ──────────────────────────────────────────────────────── */
+const LS_MTG = 'meetingHubData';
+const LS_UI  = 'meetingHubUIState';
+let state = { meeting: null, ui: null };
+
+function loadState() {
+  try {
+    const d = localStorage.getItem(LS_MTG);
+    const u = localStorage.getItem(LS_UI);
+    state.meeting = d ? JSON.parse(d) : deepClone(DEMO_MTG);
+    state.ui      = u ? JSON.parse(u) : deepClone(DEMO_UI);
+  } catch {
+    state.meeting = deepClone(DEMO_MTG);
+    state.ui      = deepClone(DEMO_UI);
+  }
+}
+function saveState() {
+  try {
+    localStorage.setItem(LS_MTG, JSON.stringify(state.meeting));
+    localStorage.setItem(LS_UI,  JSON.stringify(state.ui));
+  } catch {}
+}
+function resetToDemo() {
+  if (!confirm('Reset all data to demo content? This cannot be undone.')) return;
+  state.meeting = deepClone(DEMO_MTG);
+  state.ui      = deepClone(DEMO_UI);
+  saveState(); renderApp(); showToast('Reset to demo data');
+}
+
+/* ── Utilities ──────────────────────────────────────────────────── */
+function deepClone(o)  { return JSON.parse(JSON.stringify(o)); }
+function genId()       { return 'x' + Math.random().toString(36).slice(2,9); }
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function setPath(obj, path, val) {
+  const keys = path.split('.');
+  let cur = obj;
+  for (let i = 0; i < keys.length-1; i++) {
+    if (cur[keys[i]] == null) cur[keys[i]] = {};
+    cur = cur[keys[i]];
+  }
+  cur[keys[keys.length-1]] = val;
+}
+function avatarColor(i) { return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
+function initials(n)    { return (n||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+/* ── Debounced save ─────────────────────────────────────────────── */
+let _st = null;
+function scheduleSave() {
+  clearTimeout(_st);
+  _st = setTimeout(() => { saveState(); showToast('Saved'); }, 700);
+}
+
+/* ── Toast ──────────────────────────────────────────────────────── */
+let _tt = null;
+function showToast(msg, ms=2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER — TOP NAV
+══════════════════════════════════════════════════════════════════ */
+function renderTopNav() {
+  const m = state.meeting;
+  document.getElementById('nav-title').textContent = m.title || 'Untitled Meeting';
+  document.getElementById('nav-type').textContent  = m.meeting_type || '';
+  const ph = state.ui.phase;
+  document.getElementById('pb-prep').className    = 'ph-btn'+(ph==='prep'   ?' on-prep'   :'');
+  document.getElementById('pb-live').className    = 'ph-btn'+(ph==='live'   ?' on-live'   :'');
+  document.getElementById('pb-results').className = 'ph-btn'+(ph==='results'?' on-results':'');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER — SIDEBAR
+══════════════════════════════════════════════════════════════════ */
+function renderSidebar() {
+  const groups = {};
+  SECTIONS.forEach(s => { if(!groups[s.group]) groups[s.group]=[]; groups[s.group].push(s); });
+  let html = '';
+  const dotClr = { PREPARE:'var(--prep-c)', LIVE:'var(--live-c)', RESULTS:'var(--res-c)' };
+  for (const [grp, secs] of Object.entries(groups)) {
+    html += `<div class="sb-group">${grp}</div>`;
+    secs.forEach(s => {
+      const active = state.ui.active_section === s.id ? ' active' : '';
+      html += `<div class="sb-item${active}" data-sb="${s.id}" onclick="jumpToSection('${s.id}')">
+        ${icon(s.iconKey, 14)}<span style="flex:1">${s.label}</span>
+        <span class="sb-dot" style="background:${dotClr[grp]}"></span>
+      </div>`;
+    });
+  }
+  document.getElementById('sb-nav').innerHTML = html;
+}
+
+function updateSidebarActive(id) {
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.sb === id));
+  state.ui.active_section = id;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER — RIGHT PANEL
+══════════════════════════════════════════════════════════════════ */
+function renderRightPanel() {
+  const m = state.meeting;
+  const overlap  = (m.collision_field?.overlap  ||[])[0]||'—';
+  const tension  = (m.collision_field?.tensions ||[])[0]||'—';
+  const phLabel  = {prep:'Preparation',live:'Live Meeting',results:'Post-Meeting'}[state.ui.phase]||'';
+  const phColor  = state.ui.phase==='prep'?'var(--prep-c)':state.ui.phase==='live'?'var(--live-c)':'var(--res-c)';
+  document.getElementById('rp-content').innerHTML = `
+    <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-3);margin-bottom:10px">Awareness</div>
+    <div class="aw-row"><div class="aw-label">Meeting Goal</div>
+      <div class="aw-val">${escHtml(m.goal)||'<em style="color:var(--text-3)">Not set</em>'}</div></div>
+    <div class="aw-row"><div class="aw-label">Desired Outcome</div>
+      <div class="aw-val">${escHtml(m.desired_outcome)||'<em style="color:var(--text-3)">Not set</em>'}</div></div>
+    <div class="aw-row"><div class="aw-label">Top Overlap</div>
+      <div class="aw-val cf-overlap">${escHtml(overlap)}</div></div>
+    <div class="aw-row"><div class="aw-label">Key Tension</div>
+      <div class="aw-val cf-tension">${escHtml(tension)}</div></div>
+    <div class="aw-row"><div class="aw-label">Current Phase</div>
+      <div class="aw-val" style="font-weight:600;color:${phColor}">${phLabel}</div></div>
+    <div style="margin-top:14px">
+      <div class="aw-label" style="margin-bottom:6px">Quick Capture</div>
+      <textarea class="qcap" placeholder="Capture thoughts here…"
+        oninput="state.ui.quick_capture=this.value;scheduleSave()">${escHtml(state.ui.quick_capture)}</textarea>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SECTION BODY RENDERERS
+══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Meeting Frame ─────────────────────────────────────────── */
+function bodyFrame() {
+  const m = state.meeting;
+  return `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 14px">
+    <div style="grid-column:1/-1">
+      <div class="fl">Meeting Title</div>
+      <input class="fi" type="text" value="${escHtml(m.title)}" data-mp="title" placeholder="e.g. Exploratory Alignment Call">
+    </div>
+    <div><div class="fl">Date</div>
+      <input class="fi" type="date" value="${escHtml(m.date)}" data-mp="date"></div>
+    <div><div class="fl">Meeting Type</div>
+      <select class="fsel" data-mp="meeting_type">
+        <option value="1:1"  ${m.meeting_type==='1:1'  ?'selected':''}>1:1</option>
+        <option value="Group"${m.meeting_type==='Group'?'selected':''}>Group</option>
+      </select></div>
+    <div style="grid-column:1/-1">
+      <div class="fl">Goal</div>
+      <textarea class="fta" data-mp="goal" placeholder="What is this meeting for?">${escHtml(m.goal)}</textarea>
+    </div>
+    <div style="grid-column:1/-1">
+      <div class="fl">Context</div>
+      <textarea class="fta" data-mp="context" placeholder="Background, relationship level, origin…">${escHtml(m.context)}</textarea>
+    </div>
+    <div style="grid-column:1/-1">
+      <div class="fl">Desired Outcome</div>
+      <textarea class="fta fta-sm" data-mp="desired_outcome" placeholder="What does success look like?">${escHtml(m.desired_outcome)}</textarea>
+    </div>
+  </div>`;
+}
+
+/* ── 2. Personas ─────────────────────────────────────────────── */
+function bodyPersonas() {
+  const ps = state.meeting.personas || [];
+  let html = ps.map((p, pi) => {
+    const clr = avatarColor(pi);
+    return `<div class="pcard">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="pavatar" style="background:${clr}">${escHtml(initials(p.name))}</div>
+        <div style="flex:1"><input class="fi fi-sm" type="text" value="${escHtml(p.name)}" data-mp="personas.${pi}.name" placeholder="Name"></div>
+        <button class="btn btn-del btn-xs" onclick="removePersona(${pi})" title="Remove persona">${icon('trash',13)}</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px">
+        <div><div class="fl">Role</div>
+          <input class="fi fi-sm" type="text" value="${escHtml(p.role)}" data-mp="personas.${pi}.role" placeholder="Role / Title"></div>
+        <div><div class="fl">Angle</div>
+          <input class="fi fi-sm" type="text" value="${escHtml(p.angle)}" data-mp="personas.${pi}.angle" placeholder="Their strategic angle"></div>
+        <div style="grid-column:1/-1"><div class="fl">Background</div>
+          <textarea class="fta fta-sm" data-mp="personas.${pi}.background">${escHtml(p.background)}</textarea></div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="fl">Interests</div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center">
+          ${(p.interests||[]).map((t,ti)=>`<span class="tc">${escHtml(t)}<button class="tc-rm" onclick="removeTag(${pi},'interests',${ti})">×</button></span>`).join('')}
+          <input class="ta-inp" type="text" placeholder="+ interest" onkeydown="if(event.key==='Enter'&&this.value.trim()){addTag(${pi},'interests',this.value.trim());this.value='';event.preventDefault()}">
+        </div>
+      </div>
+      <div style="margin-top:6px">
+        <div class="fl">Expectations</div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center">
+          ${(p.expectations||[]).map((t,ti)=>`<span class="tc">${escHtml(t)}<button class="tc-rm" onclick="removeTag(${pi},'expectations',${ti})">×</button></span>`).join('')}
+          <input class="ta-inp" type="text" placeholder="+ expectation" onkeydown="if(event.key==='Enter'&&this.value.trim()){addTag(${pi},'expectations',this.value.trim());this.value='';event.preventDefault()}">
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="fl">Links</div>
+        ${(p.links||[]).map((lk,li)=>`
+          <div class="link-row">
+            <input class="fi fi-sm" type="text" value="${escHtml(lk.label)}" data-mp="personas.${pi}.links.${li}.label" placeholder="Label" style="flex:.8">
+            <input class="fi fi-sm" type="url"  value="${escHtml(lk.url)}"   data-mp="personas.${pi}.links.${li}.url"   placeholder="URL">
+            <button class="btn btn-del btn-xs" onclick="removeLink(${pi},${li})">${icon('close',12)}</button>
+          </div>`).join('')}
+        <button class="btn btn-ghost btn-xs" onclick="addLink(${pi})" style="margin-top:2px">${icon('add_link',13)} Add link</button>
+      </div>
+    </div>`;
+  }).join('');
+  html += `<button class="btn btn-ghost btn-sm" onclick="addPersona()" style="margin-top:4px">${icon('person_add',14)} Add Persona</button>`;
+  return html;
+}
+
+/* ── 3. Resources ────────────────────────────────────────────── */
+function bodyResources() {
+  const r = state.meeting.resources || { links:[], documents:[], notes:[] };
+  return `
+  <div>
+    <div class="subsec-head">${icon('link',14,'var(--res-c)')} Links</div>
+    ${(r.links||[]).map((lk,i)=>`
+      <div class="li" style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center">
+        <input class="fi fi-sm" type="text" value="${escHtml(lk.label)}" data-mp="resources.links.${i}.label" placeholder="Label">
+        <input class="fi fi-sm" type="url"  value="${escHtml(lk.url)}"   data-mp="resources.links.${i}.url"   placeholder="URL">
+        <button class="btn btn-del btn-xs" onclick="removeResLink(${i})">${icon('close',12)}</button>
+        <div style="grid-column:1/-1">
+          <input class="fi fi-sm" type="text" value="${escHtml(lk.note)}" data-mp="resources.links.${i}.note" placeholder="Note (optional)" style="font-style:italic">
+        </div>
+      </div>`).join('')}
+    <button class="btn btn-ghost btn-xs" onclick="addResLink()">${icon('add',13)} Add link</button>
+  </div>
+  <div class="divh"></div>
+  <div>
+    <div class="subsec-head">${icon('description',14,'var(--prep-c)')} Documents</div>
+    ${(r.documents||[]).map((doc,i)=>`
+      <div class="li" style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center">
+        <input class="fi fi-sm" type="text" value="${escHtml(doc.title)}" data-mp="resources.documents.${i}.title" placeholder="Title">
+        <input class="fi fi-sm" type="text" value="${escHtml(doc.type)}"  data-mp="resources.documents.${i}.type"  placeholder="Type" style="width:90px">
+        <button class="btn btn-del btn-xs" onclick="removeResDoc(${i})">${icon('close',12)}</button>
+        <div style="grid-column:1/-1">
+          <input class="fi fi-sm" type="text" value="${escHtml(doc.note)}" data-mp="resources.documents.${i}.note" placeholder="Note" style="font-style:italic">
+        </div>
+      </div>`).join('')}
+    <button class="btn btn-ghost btn-xs" onclick="addResDoc()">${icon('add',13)} Add document</button>
+  </div>
+  <div class="divh"></div>
+  <div>
+    <div class="subsec-head">${icon('sticky',14,'#FF6B35')} Notes</div>
+    ${(r.notes||[]).map((n,i)=>`
+      <div class="li" style="display:flex;align-items:flex-start;gap:6px">
+        <textarea class="fta fta-sm" data-mp="resources.notes.${i}.text" style="flex:1">${escHtml(n.text)}</textarea>
+        <button class="btn btn-del btn-xs" onclick="removeResNote(${i})" style="margin-top:2px">${icon('close',12)}</button>
+      </div>`).join('')}
+    <button class="btn btn-ghost btn-xs" onclick="addResNote()">${icon('add',13)} Add note</button>
+  </div>`;
+}
+
+/* ── 4. Collision Field ──────────────────────────────────────── */
+function bodyCF() {
+  const cf = state.meeting.collision_field || {};
+  const fields = [
+    { key:'overlap',       label:'Overlap',        icon:'overlap',  cls:'cf-overlap'     },
+    { key:'differences',   label:'Differences',    icon:'compare',  cls:'cf-diff'        },
+    { key:'tensions',      label:'Tensions',       icon:'bolt',     cls:'cf-tension'     },
+    { key:'opportunities', label:'Opportunities',  icon:'rocket',   cls:'cf-opportunity' },
+    { key:'open_questions',label:'Open Questions', icon:'help',     cls:'cf-question'    },
+  ];
+  return fields.map((f,fi) => `
+    ${fi>0?'<div class="divh"></div>':''}
+    <div>
+      <div class="subsec-head"><span class="${f.cls}">${icon(f.icon,14)}</span> ${f.label}</div>
+      ${(cf[f.key]||[]).map((item,i)=>`
+        <div class="li" style="display:flex;align-items:center;gap:6px">
+          <input class="fi fi-sm" type="text" value="${escHtml(item)}" data-mp="collision_field.${f.key}.${i}" style="flex:1">
+          <button class="btn btn-del btn-xs" onclick="removeCFItem('${f.key}',${i})">${icon('close',12)}</button>
+        </div>`).join('')||`<div class="empty-st">No ${f.label.toLowerCase()} yet</div>`}
+      <button class="btn btn-ghost btn-xs" onclick="addCFItem('${f.key}')" style="margin-top:2px">${icon('add',13)} Add</button>
+    </div>`).join('');
+}
+
+/* ── 5. Agenda ───────────────────────────────────────────────── */
+function bodyAgenda() {
+  const items = state.meeting.agenda?.items || [];
+  return items.map((item,i)=>`
+    <div class="li${item.current_focus?' focus-ring':''}">
+      <div style="display:grid;grid-template-columns:1fr 100px 60px auto;gap:6px;align-items:center">
+        <input class="fi fi-sm" type="text" value="${escHtml(item.topic)}" data-mp="agenda.items.${i}.topic" placeholder="Topic" style="font-weight:500">
+        <input class="fi fi-sm" type="text" value="${escHtml(item.owner)}" data-mp="agenda.items.${i}.owner" placeholder="Owner">
+        <div style="display:flex;align-items:center;gap:2px">
+          <input class="fi fi-sm" type="number" value="${item.timebox||''}" data-mp="agenda.items.${i}.timebox" placeholder="min" style="width:100%">
+        </div>
+        <button class="btn btn-del btn-xs" onclick="removeAgendaItem(${i})">${icon('close',12)}</button>
+        <div style="grid-column:1/-1">
+          <input class="fi fi-sm" type="text" value="${escHtml(item.notes)}" data-mp="agenda.items.${i}.notes" placeholder="Notes / desired output" style="font-style:italic;color:var(--text-2)">
+        </div>
+        <div style="grid-column:1/-1;margin-top:2px">
+          <button class="btn btn-xs" style="${item.current_focus?'background:var(--live-bg);color:var(--live-c);border-color:rgba(0,122,255,.2)':''}"
+            onclick="setAgendaFocus(${i})">
+            ${icon(item.current_focus?'radio_on':'radio_off',13)} ${item.current_focus?'Current Focus':'Set as Focus'}
+          </button>
+        </div>
+      </div>
+    </div>`).join('') + `
+  <button class="btn btn-ghost btn-sm" onclick="addAgendaItem()" style="margin-top:4px">${icon('add',14)} Add Item</button>`;
+}
+
+/* ── 6. Contributions ────────────────────────────────────────── */
+function bodyContributions() {
+  const items = state.meeting.contributions || [];
+  return items.map((c,i)=>`
+    <div class="li">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;margin-bottom:6px">
+        <input class="fi fi-sm" type="text" value="${escHtml(c.author)}" data-mp="contributions.${i}.author" placeholder="Author">
+        <select class="fsel" style="font-size:12px;padding:4px 26px 4px 8px" data-mp="contributions.${i}.entry_type">
+          <option value="idea"     ${c.entry_type==='idea'    ?'selected':''}>💡 Idea</option>
+          <option value="question" ${c.entry_type==='question'?'selected':''}>❓ Question</option>
+          <option value="resource" ${c.entry_type==='resource'?'selected':''}>📎 Resource</option>
+        </select>
+        <button class="btn btn-del btn-xs" onclick="removeContribution(${i})">${icon('close',12)}</button>
+      </div>
+      <textarea class="fta fta-sm" data-mp="contributions.${i}.content" placeholder="Content…">${escHtml(c.content)}</textarea>
+    </div>`).join('') + `
+  <button class="btn btn-ghost btn-sm" onclick="addContribution()" style="margin-top:4px">${icon('add_comment',14)} Add Entry</button>`;
+}
+
+/* ── 7. Live Notes ───────────────────────────────────────────── */
+function bodyLiveNotes() {
+  const items = state.meeting.live_notes || [];
+  return `
+  <div style="margin-bottom:10px">
+    <button class="btn btn-primary btn-sm" onclick="addLiveNoteNow()">${icon('schedule',14)} Add Note Now</button>
+  </div>
+  ${items.length ? items.map((n,i)=>`
+    <div class="li" style="display:flex;gap:8px;align-items:flex-start">
+      <input class="fi fi-sm" type="text" value="${escHtml(n.timestamp)}" data-mp="live_notes.${i}.timestamp"
+        style="width:84px;font-size:11px;color:var(--text-3);flex-shrink:0">
+      <textarea class="fta fta-sm" data-mp="live_notes.${i}.note" style="flex:1">${escHtml(n.note)}</textarea>
+      <button class="btn btn-del btn-xs" onclick="removeLiveNote(${i})" style="margin-top:2px">${icon('close',12)}</button>
+    </div>`).join('') : '<div class="empty-st">No live notes yet — tap "Add Note Now" to stamp a note with the current time.</div>'}`;
+}
+
+/* ── 8. Idea Space ───────────────────────────────────────────── */
+function bodyIdeaSpace() {
+  const items = state.meeting.idea_space || [];
+  return items.map((idea,i)=>`
+    <div class="li">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <span style="color:#F5A623;font-size:18px;flex-shrink:0">💡</span>
+        <input class="fi fi-sm" type="text" value="${escHtml(idea.title)}" data-mp="idea_space.${i}.title" placeholder="Idea title" style="flex:1;font-weight:500">
+        <button class="btn btn-del btn-xs" onclick="removeIdea(${i})">${icon('close',12)}</button>
+      </div>
+      <textarea class="fta fta-sm" data-mp="idea_space.${i}.description" placeholder="Describe the idea…">${escHtml(idea.description)}</textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+        <div><div class="fl">Owner</div>
+          <input class="fi fi-sm" type="text" value="${escHtml(idea.owner)}" data-mp="idea_space.${i}.owner" placeholder="Owner(s)"></div>
+        <div><div class="fl">Potential</div>
+          <input class="fi fi-sm" type="text" value="${escHtml(idea.potential)}" data-mp="idea_space.${i}.potential" placeholder="High / Medium / Low…"></div>
+      </div>
+    </div>`).join('') + `
+  <button class="btn btn-ghost btn-sm" onclick="addIdea()" style="margin-top:4px">${icon('add',14)} Add Idea</button>`;
+}
+
+/* ── 9. Parking Lot ──────────────────────────────────────────── */
+function bodyParkingLot() {
+  const items = state.meeting.parking_lot || [];
+  return items.map((pk,i)=>`
+    <div class="li">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <span style="color:#FF6B35;font-size:14px;font-weight:700;flex-shrink:0">P</span>
+        <input class="fi fi-sm" type="text" value="${escHtml(pk.item)}" data-mp="parking_lot.${i}.item" placeholder="Parked topic" style="flex:1">
+        <button class="btn btn-del btn-xs" onclick="removeParkingItem(${i})">${icon('close',12)}</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div><div class="fl">Reason</div>
+          <input class="fi fi-sm" type="text" value="${escHtml(pk.reason)}" data-mp="parking_lot.${i}.reason" placeholder="Why parked?"></div>
+        <div><div class="fl">Owner</div>
+          <input class="fi fi-sm" type="text" value="${escHtml(pk.owner)}" data-mp="parking_lot.${i}.owner" placeholder="Follow-up owner"></div>
+      </div>
+    </div>`).join('') + `
+  <button class="btn btn-ghost btn-sm" onclick="addParkingItem()" style="margin-top:4px">${icon('add',14)} Add to Parking Lot</button>`;
+}
+
+/* ── 10. Results ─────────────────────────────────────────────── */
+function bodyResults() {
+  const r = state.meeting.results || {};
+  const groups = [
+    { key:'decisions',  label:'Decisions',  ico:'gavel',     cls:'cf-tension'      },
+    { key:'insights',   label:'Insights',   ico:'lightbulb', cls:'cf-opportunity'  },
+    { key:'agreements', label:'Agreements', ico:'handshake', cls:'cf-overlap'      },
+  ];
+  return groups.map((g,gi)=>`
+    ${gi>0?'<div class="divh"></div>':''}
+    <div>
+      <div class="subsec-head"><span class="${g.cls}">${icon(g.ico,14)}</span> ${g.label}</div>
+      ${(r[g.key]||[]).map((item,i)=>`
+        <div class="li" style="display:flex;align-items:flex-start;gap:6px">
+          <textarea class="fta fta-sm" data-mp="results.${g.key}.${i}" style="flex:1;min-height:44px">${escHtml(item)}</textarea>
+          <button class="btn btn-del btn-xs" onclick="removeResultItem('${g.key}',${i})" style="margin-top:2px">${icon('close',12)}</button>
+        </div>`).join('')||`<div class="empty-st">No ${g.label.toLowerCase()} yet</div>`}
+      <button class="btn btn-ghost btn-xs" onclick="addResultItem('${g.key}')" style="margin-top:2px">${icon('add',13)} Add ${g.label.slice(0,-1)}</button>
+    </div>`).join('');
+}
+
+/* ── 11. Actions ─────────────────────────────────────────────── */
+function bodyActions() {
+  const items = state.meeting.actions || [];
+  return items.map((ac,i)=>`
+    <div class="li">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <span class="sb-${ac.status||'open'}">${ac.status||'open'}</span>
+        <input class="fi fi-sm" type="text" value="${escHtml(ac.task)}" data-mp="actions.${i}.task" placeholder="Task description" style="flex:1;font-weight:500">
+        <button class="btn btn-del btn-xs" onclick="removeAction(${i})">${icon('close',12)}</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div><div class="fl">Owner</div>
+          <input class="fi fi-sm" type="text" value="${escHtml(ac.owner)}" data-mp="actions.${i}.owner" placeholder="Owner"></div>
+        <div><div class="fl">Deadline</div>
+          <input class="fi fi-sm" type="date" value="${escHtml(ac.deadline)}" data-mp="actions.${i}.deadline"></div>
+        <div><div class="fl">Status</div>
+          <select class="fsel" style="font-size:12px;padding:4px 26px 4px 8px" data-mp="actions.${i}.status">
+            <option value="open"        ${ac.status==='open'       ?'selected':''}>Open</option>
+            <option value="in_progress" ${ac.status==='in_progress'?'selected':''}>In Progress</option>
+            <option value="done"        ${ac.status==='done'       ?'selected':''}>Done</option>
+          </select></div>
+      </div>
+    </div>`).join('') + `
+  <button class="btn btn-ghost btn-sm" onclick="addAction()" style="margin-top:4px">${icon('add',14)} Add Action</button>`;
+}
+
+/* ── Section renderer map ─────────────────────────────────────── */
+const BODIES = {
+  frame:         bodyFrame,
+  personas:      bodyPersonas,
+  resources:     bodyResources,
+  collision_field: bodyCF,
+  agenda:        bodyAgenda,
+  contributions: bodyContributions,
+  live_notes:    bodyLiveNotes,
+  idea_space:    bodyIdeaSpace,
+  parking_lot:   bodyParkingLot,
+  results:       bodyResults,
+  actions:       bodyActions,
+};
+
+function rerenderSection(id) {
+  const el = document.getElementById(`sb-${id}`);
+  if (el && BODIES[id]) el.innerHTML = BODIES[id]();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   WORKSPACE RENDER
+══════════════════════════════════════════════════════════════════ */
+function renderWorkspace() {
+  const emph = PHASE_SECTIONS[state.ui.phase] || [];
+  const html = SECTIONS.map(s => {
+    const expanded = state.ui.expanded_sections.includes(s.id);
+    const deemph   = !emph.includes(s.id) ? ' deemph' : '';
+    const phLabel  = s.phase === 'prep' ? 'Prep' : s.phase === 'live' ? 'Live' : 'Results';
+    return `
+    <div id="sc-${s.id}" class="s-card${expanded?' expanded':''}${deemph}" data-section="${s.id}">
+      <div class="s-header" onclick="toggleSection('${s.id}')">
+        <span class="s-chev">${icon('chevron',15)}</span>
+        ${icon(s.iconKey,15)}
+        <span class="s-title">${s.label}</span>
+        <span class="pbadge ${s.phase}">${phLabel}</span>
+      </div>
+      <div class="s-body" id="sb-${s.id}">${BODIES[s.id]()}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('ws-content').innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER APP
+══════════════════════════════════════════════════════════════════ */
+function renderApp() {
+  renderTopNav();
+  renderSidebar();
+  renderWorkspace();
+  renderRightPanel();
+  initInputDelegation();
+  initIntersectionObserver();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PHASE & SECTION MANAGEMENT
+══════════════════════════════════════════════════════════════════ */
+function setPhase(phase) {
+  state.ui.phase = phase;
+  // Auto-expand phase sections; keep others if already expanded
+  const recommended = PHASE_SECTIONS[phase];
+  const combined    = [...new Set([...recommended, ...state.ui.expanded_sections])];
+  state.ui.expanded_sections = combined;
+  saveState();
+
+  // Update phase buttons
+  document.getElementById('pb-prep').className    = 'ph-btn'+(phase==='prep'   ?' on-prep'   :'');
+  document.getElementById('pb-live').className    = 'ph-btn'+(phase==='live'   ?' on-live'   :'');
+  document.getElementById('pb-results').className = 'ph-btn'+(phase==='results'?' on-results':'');
+
+  const emph = PHASE_SECTIONS[phase];
+  SECTIONS.forEach(s => {
+    const card = document.getElementById(`sc-${s.id}`);
+    if (!card) return;
+    card.classList.toggle('deemph',    !emph.includes(s.id));
+    card.classList.toggle('expanded',  state.ui.expanded_sections.includes(s.id));
+  });
+  renderRightPanel();
+  showToast(`Phase: ${phase.charAt(0).toUpperCase()+phase.slice(1)}`);
+}
+
+function toggleSection(id) {
+  const card = document.getElementById(`sc-${id}`);
+  if (!card) return;
+  const open = card.classList.contains('expanded');
+  if (open) {
+    card.classList.remove('expanded');
+    state.ui.expanded_sections = state.ui.expanded_sections.filter(x => x !== id);
+  } else {
+    card.classList.add('expanded');
+    if (!state.ui.expanded_sections.includes(id)) state.ui.expanded_sections.push(id);
+  }
+  saveState();
+}
+
+function jumpToSection(id) {
+  const el = document.getElementById(`sc-${id}`);
+  if (!el) return;
+  if (!el.classList.contains('expanded')) toggleSection(id);
+  el.scrollIntoView({ behavior:'smooth', block:'start' });
+  updateSidebarActive(id);
+  saveState();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INPUT DELEGATION (field updates without re-render)
+══════════════════════════════════════════════════════════════════ */
+function initInputDelegation() {
+  const ws = document.getElementById('ws-content');
+  if (ws._del) return; ws._del = true;
+
+  ws.addEventListener('input', e => {
+    const path = e.target.dataset.mp;
+    if (!path) return;
+    setPath(state.meeting, path, e.target.value);
+    scheduleSave();
+    if (path === 'title')        document.getElementById('nav-title').textContent = e.target.value || 'Untitled Meeting';
+    if (path === 'meeting_type') document.getElementById('nav-type').textContent  = e.target.value;
+    if (path === 'goal' || path === 'desired_outcome' || path.startsWith('collision_field')) renderRightPanel();
+  });
+
+  ws.addEventListener('change', e => {
+    const path = e.target.dataset.mp;
+    if (!path) return;
+    setPath(state.meeting, path, e.target.value);
+    saveState(); showToast('Saved');
+    if (path === 'meeting_type') document.getElementById('nav-type').textContent = e.target.value;
+    // Re-render action items to update status badge
+    if (path.startsWith('actions.') && path.endsWith('.status')) rerenderSection('actions');
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   STRUCTURAL ACTION HANDLERS
+══════════════════════════════════════════════════════════════════ */
+
+// Personas
+function addPersona()           { (state.meeting.personas=state.meeting.personas||[]).push({id:genId(),name:'New Persona',role:'',background:'',interests:[],expectations:[],angle:'',links:[]}); saveState(); rerenderSection('personas'); }
+function removePersona(i)       { state.meeting.personas.splice(i,1); saveState(); rerenderSection('personas'); }
+function addTag(pi,field,val)   { (state.meeting.personas[pi][field]=state.meeting.personas[pi][field]||[]).push(val); saveState(); rerenderSection('personas'); }
+function removeTag(pi,field,ti) { state.meeting.personas[pi][field].splice(ti,1); saveState(); rerenderSection('personas'); }
+function addLink(pi)            { (state.meeting.personas[pi].links=state.meeting.personas[pi].links||[]).push({label:'',url:''}); saveState(); rerenderSection('personas'); }
+function removeLink(pi,li)      { state.meeting.personas[pi].links.splice(li,1); saveState(); rerenderSection('personas'); }
+
+// Resources
+function addResLink()    { (state.meeting.resources=state.meeting.resources||{links:[],documents:[],notes:[]}).links.push({id:genId(),label:'',url:'',note:''}); saveState(); rerenderSection('resources'); }
+function removeResLink(i){ state.meeting.resources.links.splice(i,1); saveState(); rerenderSection('resources'); }
+function addResDoc()     { state.meeting.resources.documents.push({id:genId(),title:'',type:'',note:''}); saveState(); rerenderSection('resources'); }
+function removeResDoc(i) { state.meeting.resources.documents.splice(i,1); saveState(); rerenderSection('resources'); }
+function addResNote()    { state.meeting.resources.notes.push({id:genId(),text:''}); saveState(); rerenderSection('resources'); }
+function removeResNote(i){ state.meeting.resources.notes.splice(i,1); saveState(); rerenderSection('resources'); }
+
+// Collision Field
+function addCFItem(type)    { (state.meeting.collision_field=state.meeting.collision_field||{})[type]=(state.meeting.collision_field[type]||[]); state.meeting.collision_field[type].push(''); saveState(); rerenderSection('collision_field'); }
+function removeCFItem(t,i)  { state.meeting.collision_field[t].splice(i,1); saveState(); rerenderSection('collision_field'); }
+
+// Agenda
+function addAgendaItem()   { (state.meeting.agenda=state.meeting.agenda||{items:[]}).items.push({id:genId(),topic:'New Topic',owner:'',timebox:5,notes:'',current_focus:false}); saveState(); rerenderSection('agenda'); }
+function removeAgendaItem(i){ state.meeting.agenda.items.splice(i,1); saveState(); rerenderSection('agenda'); }
+function setAgendaFocus(i)  { state.meeting.agenda.items.forEach((item,idx)=>{item.current_focus=idx===i;}); saveState(); rerenderSection('agenda'); }
+
+// Contributions
+function addContribution()   { (state.meeting.contributions=state.meeting.contributions||[]).push({id:genId(),author:'',entry_type:'idea',content:''}); saveState(); rerenderSection('contributions'); }
+function removeContribution(i){ state.meeting.contributions.splice(i,1); saveState(); rerenderSection('contributions'); }
+
+// Live Notes
+function addLiveNoteNow() {
+  const now = new Date();
+  const ts  = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  (state.meeting.live_notes=state.meeting.live_notes||[]).push({id:genId(),timestamp:ts,note:''});
+  saveState(); rerenderSection('live_notes');
+}
+function removeLiveNote(i) { state.meeting.live_notes.splice(i,1); saveState(); rerenderSection('live_notes'); }
+
+// Idea Space
+function addIdea()    { (state.meeting.idea_space=state.meeting.idea_space||[]).push({id:genId(),title:'New Idea',description:'',owner:'',potential:''}); saveState(); rerenderSection('idea_space'); }
+function removeIdea(i){ state.meeting.idea_space.splice(i,1); saveState(); rerenderSection('idea_space'); }
+
+// Parking Lot
+function addParkingItem()    { (state.meeting.parking_lot=state.meeting.parking_lot||[]).push({id:genId(),item:'',reason:'',owner:''}); saveState(); rerenderSection('parking_lot'); }
+function removeParkingItem(i){ state.meeting.parking_lot.splice(i,1); saveState(); rerenderSection('parking_lot'); }
+
+// Results
+function addResultItem(key)    { (state.meeting.results=state.meeting.results||{})[key]=(state.meeting.results[key]||[]); state.meeting.results[key].push(''); saveState(); rerenderSection('results'); }
+function removeResultItem(k,i) { state.meeting.results[k].splice(i,1); saveState(); rerenderSection('results'); }
+
+// Actions
+function addAction()    { (state.meeting.actions=state.meeting.actions||[]).push({id:genId(),task:'',owner:'',deadline:'',status:'open'}); saveState(); rerenderSection('actions'); }
+function removeAction(i){ state.meeting.actions.splice(i,1); saveState(); rerenderSection('actions'); }
+
+/* ══════════════════════════════════════════════════════════════════
+   INTERSECTION OBSERVER
+══════════════════════════════════════════════════════════════════ */
+function initIntersectionObserver() {
+  const root = document.getElementById('workspace');
+  const obs  = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) updateSidebarActive(e.target.id.replace('sc-',''));
+    });
+  }, { root, rootMargin:'-20% 0px -70% 0px', threshold:0 });
+  SECTIONS.forEach(s => { const el = document.getElementById(`sc-${s.id}`); if(el) obs.observe(el); });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   IMPORT / EXPORT
+══════════════════════════════════════════════════════════════════ */
+function exportJSON() {
+  const data = { meeting: state.meeting, ui_state: state.ui, exported_at: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `meeting_hub_${(state.meeting.date||new Date().toISOString().slice(0,10))}.json`;
+  a.click(); URL.revokeObjectURL(url); showToast('Exported JSON');
+}
+
+function triggerImport() { document.getElementById('import-input').click(); }
+
+function handleImport(e) {
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.meeting)  state.meeting = data.meeting;
+      if (data.ui_state) state.ui = data.ui_state;
+      saveState(); renderApp(); showToast('Imported successfully');
+    } catch { showToast('Import failed — invalid JSON'); }
+    e.target.value = '';
+  };
+  r.readAsText(file);
+}
+
+function exportMarkdown() {
+  const m  = state.meeting;
+  const ts = m.date || new Date().toISOString().slice(0,10);
+  const lines = [
+    `# Meeting Summary: ${m.title||'Untitled'}`,
+    `**Date:** ${m.date||ts}  |  **Type:** ${m.meeting_type||''}  |  **Duration:** ${m.duration_minutes||'?'} min`,
+    '',
+    `## Goal\n${m.goal||'_Not set_'}`,
+    '',
+    `## Desired Outcome\n${m.desired_outcome||'_Not set_'}`,
+    '',
+    `## Personas`,
+    ...(m.personas||[]).map(p=>`### ${p.name} — ${p.role}\n${p.background||''}\n\n**Interests:** ${(p.interests||[]).join(', ')}\n\n**Angle:** ${p.angle||''}`),
+    '',
+    `## Collision Field`,
+    `### Overlap`,    ...(m.collision_field?.overlap||[]).map(x=>`- ${x}`),
+    `### Tensions`,   ...(m.collision_field?.tensions||[]).map(x=>`- ${x}`),
+    `### Opportunities`, ...(m.collision_field?.opportunities||[]).map(x=>`- ${x}`),
+    `### Open Questions`, ...(m.collision_field?.open_questions||[]).map(x=>`- ${x}`),
+    '',
+    `## Agenda`,
+    ...(m.agenda?.items||[]).map((ag,i)=>`${i+1}. **${ag.topic}** (${ag.owner}, ${ag.timebox}min)${ag.notes?' — '+ag.notes:''}`),
+    '',
+    `## Live Notes`,
+    ...(m.live_notes||[]).map(n=>`- **${n.timestamp}** — ${n.note}`),
+    '',
+    `## Idea Space`,
+    ...(m.idea_space||[]).map(id=>`### ${id.title}\n${id.description}\n**Owner:** ${id.owner}  **Potential:** ${id.potential}`),
+    '',
+    `## Results`,
+    `### Decisions`,  ...(m.results?.decisions||[]).map(x=>`- ${x}`),
+    `### Insights`,   ...(m.results?.insights||[]).map(x=>`- ${x}`),
+    `### Agreements`, ...(m.results?.agreements||[]).map(x=>`- ${x}`),
+    '',
+    `## Actions`,
+    ...(m.actions||[]).map(ac=>`- [ ] **${ac.task}** — ${ac.owner} (${ac.deadline||'TBD'}) [${ac.status}]`),
+    '',
+    `---`,
+    `_Exported from Meeting Hub on ${new Date().toLocaleDateString()}_`
+  ];
+  const blob = new Blob([lines.join('\n')],{type:'text/markdown'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href=url; a.download=`meeting_summary_${ts}.md`;
+  a.click(); URL.revokeObjectURL(url); showToast('Exported Markdown');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('import-input').addEventListener('change', handleImport);
+  loadState();
+  renderApp();
+  injectNavIcons();
+});
+</script>
+</body>
+</html>
