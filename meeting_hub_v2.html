@@ -3,30 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Hub</title>
-    <!-- Ensure required icons are available -->
-    <link rel="icon" href="path/to/hub-icon.png" sizes="any">
-    <link rel="stylesheet" href="styles.css">
-    <script>
-        // DOMContentLoaded event to initialize the app
-        document.addEventListener('DOMContentLoaded', function() {
-            loadState();
-            renderApp();
-        });
-    </script>
+    <title>Meeting Hub v2</title>
 </head>
 <body>
-    <div id="app">
-        <div id="ws-content"> <!-- Web socket content -->
-            <p>Loading...</p>
-            <p id="fallback-message" style="display:none;">An error occurred while loading. Please refresh.</p>
-        </div>
-        <div id="rp-content"> <!-- Rendering page content -->
-            <p>Loading...</p>
-            <p id="fallback-message" style="display:none;">An error occurred while loading. Please refresh.</p>
-        </div>
-        <button aria-label="Markdown Button"><img src="path/to/markdown-icon.png" alt="Markdown Icon"> Insert Markdown</button>
-    </div>
-    <script src="app.js"></script>
+    <h1>Welcome to Meeting Hub v2</h1>
+    <p>Your content goes here.</p>
+    <script>
+        // Your JavaScript code goes here.
+        document.addEventListener('DOMContentLoaded', function(){ try{ loadState(); renderApp(); } catch(e){ console.error(e); document.body.innerHTML='<pre style="padding:12px">'+(e&&e.stack?e.stack:e)+'</pre>'; } });
+    </script>
 </body>
 </html>
