@@ -164,11 +164,24 @@ body {
 .cf-question   { color:var(--prep-c); }
 
 /* ── Status badges ── */
-.sb-open        { display:inline-flex; align-items:center; padding:1px 8px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; background:var(--warn-bg); color:var(--warn-c); }
-.sb-in_progress { display:inline-flex; align-items:center; padding:1px 8px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; background:var(--live-bg); color:var(--live-c); }
-.sb-done        { display:inline-flex; align-items:center; padding:1px 8px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; background:var(--res-bg);  color:var(--res-c); }
-
-/* ── Right panel ── */
+.sb-open {
+  display:inline-flex; align-items:center;
+  padding:1px 8px; border-radius:20px;
+  font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase;
+  background: var(--warn-bg); color: var(--warn-c);
+}
+.sb-in_progress {
+  display:inline-flex; align-items:center;
+  padding:1px 8px; border-radius:20px;
+  font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase;
+  background: var(--live-bg); color: var(--live-c);
+}
+.sb-done {
+  display:inline-flex; align-items:center;
+  padding:1px 8px; border-radius:20px;
+  font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase;
+  background: var(--res-bg); color: var(--res-c);
+}/* ── Right panel ── */
 #right-panel {
   position:sticky; top:var(--nav-h);
   height:calc(100vh - var(--nav-h));
