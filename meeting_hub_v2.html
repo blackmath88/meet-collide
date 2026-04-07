@@ -1,16 +1,1016 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Hub v2</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Hub v2 — meet-collide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+/* ── Design tokens ───────────────────────────────────────────────── */
+:root {
+  --nav-h: 52px;
+  --sb-w:  220px;
+  --rp-w:  272px;
+  --bg:          #F5F5F7;
+  --surface:     #FFFFFF;
+  --surface-2:   #FAFAFA;
+  --border:      rgba(0,0,0,.07);
+  --border-md:   rgba(0,0,0,.11);
+  --text-1: #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #AEAEB2;
+  --accent:      #0071E3;
+  --accent-bg:   #EBF3FF;
+  --live-c:  #007AFF; --live-bg:  #E5F0FF;
+  --done-c:  #30A046; --done-bg:  #E6F4EA;
+  --warn-c:  #B45309; --warn-bg:  #FFF5E0;
+  --shadow-card: 0 1px 3px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.05);
+  --shadow-up:   0 4px 14px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.05);
+  --r:  10px;
+  --rs: 6px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px; line-height: 1.55;
+  background: var(--bg); color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SVG icons ─────────────────────────────────────────────────── */
+.icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; vertical-align:middle; }
+.icon svg { display:block; }
+
+/* ── Top Nav ───────────────────────────────────────────────────── */
+#topnav {
+  position: sticky; top: 0; z-index: 200;
+  height: var(--nav-h);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-md);
+  display: flex; align-items: center; padding: 0 14px; gap: 10px;
+}
+.nav-divider { width:1px; height:18px; background:var(--border-md); flex-shrink:0; }
+.nav-progress {
+  display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+}
+.nav-progress-bar {
+  width: 80px; height: 5px; background: #E0E0E5; border-radius: 3px; overflow: hidden;
+}
+.nav-progress-fill {
+  height: 100%; background: var(--done-c); border-radius: 3px; transition: width .3s;
+}
+
+/* ── Layout ────────────────────────────────────────────────────── */
+#app-layout {
+  display: grid;
+  grid-template-columns: var(--sb-w) 1fr var(--rp-w);
+  min-height: calc(100vh - var(--nav-h));
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────── */
+#sidebar {
+  position: sticky; top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto; padding: 12px 10px;
+  border-right: 1px solid var(--border);
+  background: var(--surface-2);
+  display: flex; flex-direction: column;
+}
+.sb-group { font-size: 10px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; color: var(--text-3); padding: 10px 8px 3px; }
+.sb-block {
+  display: flex; align-items: flex-start; gap: 7px;
+  padding: 6px 8px; border-radius: var(--rs);
+  cursor: pointer; font-size: 12px; color: var(--text-2);
+  transition: background .1s, color .1s; user-select: none;
+  margin-bottom: 1px;
+}
+.sb-block:hover { background: rgba(0,0,0,.04); color: var(--text-1); }
+.sb-block.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+.sb-block.done-block { opacity: .6; }
+.sb-block-num {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  background: #E8E8ED; color: var(--text-2);
+  margin-top: 1px;
+}
+.sb-block.active .sb-block-num { background: var(--accent); color: #fff; }
+.sb-block.done-block .sb-block-num { background: var(--done-bg); color: var(--done-c); }
+.sb-block-body { flex: 1; min-width: 0; }
+.sb-block-title { font-size: 12px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-block-dur { font-size: 10px; color: var(--text-3); }
+.sb-spacer { flex: 1; }
+.sb-meta { padding: 10px 8px 4px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-2); }
+
+/* ── Workspace ─────────────────────────────────────────────────── */
+#workspace { padding: 20px 22px; overflow-y: auto; }
+
+/* ── Block cards ────────────────────────────────────────────────── */
+.b-card {
+  background: var(--surface); border-radius: var(--r);
+  box-shadow: var(--shadow-card); margin-bottom: 10px; overflow: hidden;
+  transition: box-shadow .15s, opacity .2s;
+  border: 2px solid transparent;
+}
+.b-card.active-block {
+  border-color: var(--live-c);
+  box-shadow: var(--shadow-up);
+}
+.b-card.done-card { opacity: .52; }
+.b-card.done-card:hover { opacity: .85; }
+.b-header {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 14px; cursor: pointer; user-select: none;
+  transition: background .1s;
+}
+.b-header:hover { background: rgba(0,0,0,.02); }
+.b-chev { transition: transform .15s; flex-shrink: 0; }
+.b-card.expanded .b-chev { transform: rotate(90deg); }
+.b-body { display: none; padding: 2px 14px 16px; }
+.b-card.expanded .b-body { display: block; }
+.b-num {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  background: #E8E8ED; color: var(--text-2);
+}
+.b-card.active-block .b-num { background: var(--live-c); color: #fff; }
+.b-card.done-card .b-num   { background: var(--done-bg); color: var(--done-c); }
+.b-title-inp {
+  flex: 1; border: none; background: transparent; outline: none;
+  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-1);
+  padding: 0; cursor: text;
+}
+.b-title-inp:focus { color: var(--accent); }
+.b-dur-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: .3px;
+  padding: 2px 8px; border-radius: 20px;
+  background: #EDEDF0; color: var(--text-2); flex-shrink: 0;
+  cursor: default;
+}
+.b-status-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 20px; flex-shrink: 0;
+}
+.bsb-active { background: var(--live-bg);  color: var(--live-c); }
+.bsb-done   { background: var(--done-bg);  color: var(--done-c); }
+
+/* ── Guidance grid ─────────────────────────────────────────────── */
+.g-section { margin-bottom: 14px; }
+.g-label {
+  font-size: 10px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+}
+.g-item {
+  display: flex; align-items: flex-start; gap: 6px;
+  background: var(--bg); border-radius: var(--rs); padding: 6px 9px;
+  margin-bottom: 5px;
+}
+.g-item-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-3); flex-shrink: 0; margin-top: 6px; }
+.g-item-tp .g-item-dot  { background: #5856D6; }
+.g-item-q  .g-item-dot  { background: var(--live-c); }
+.g-item-inp {
+  flex: 1; border: none; background: transparent; outline: none;
+  font-family: inherit; font-size: 12px; color: var(--text-1);
+  resize: none; min-height: 20px; line-height: 1.45;
+  padding: 0;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 12px; border-radius: var(--rs);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border-md); background: var(--surface);
+  color: var(--text-1); transition: background .1s; white-space: nowrap;
+  font-family: inherit;
+}
+.btn:hover { background: var(--bg); }
+.btn-sm   { padding: 3px 9px;  font-size: 11px; }
+.btn-xs   { padding: 2px 7px;  font-size: 11px; }
+.btn-primary { background: var(--accent); color:#fff; border-color:transparent; }
+.btn-primary:hover { background:#0077ED; }
+.btn-ghost { background:transparent; border-color:transparent; color:var(--accent); }
+.btn-ghost:hover { background: var(--accent-bg); }
+.btn-success { background: var(--done-c); color:#fff; border-color:transparent; }
+.btn-success:hover { background:#27923E; }
+.btn-del { background:transparent; border-color:transparent; color:var(--text-3); padding:2px 5px; }
+.btn-del:hover { color:#FF3B30; background:#FFF0EF; }
+
+/* ── Form fields ───────────────────────────────────────────────── */
+.fl { font-size:11px; font-weight:500; color:var(--text-2); margin-bottom:3px; }
+.fi, .fta, .fsel {
+  width:100%; background:var(--bg); border:1px solid transparent;
+  border-radius:var(--rs); padding:6px 9px;
+  font-family:inherit; font-size:13px; color:var(--text-1);
+  transition:border-color .15s, background .15s; outline:none;
+}
+.fi:focus, .fta:focus, .fsel:focus { background:var(--surface); border-color:var(--accent); }
+.fi-sm { padding:4px 8px; font-size:12px; }
+.fta { resize:vertical; min-height:68px; }
+.fta-sm { min-height:52px; }
+.fsel {
+  cursor:pointer; appearance:none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23AEAEB2'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 9px center; padding-right:28px;
+}
+
+/* ── Done checkbox ─────────────────────────────────────────────── */
+.done-check {
+  width: 17px; height: 17px; border-radius: 50%;
+  border: 2px solid var(--border-md); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .15s; background: var(--surface);
+}
+.done-check:hover { border-color: var(--done-c); }
+.done-check.checked { background: var(--done-c); border-color: var(--done-c); }
+
+/* ── Right panel ───────────────────────────────────────────────── */
+#right-panel {
+  position:sticky; top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));
+  overflow-y:auto; padding:14px 13px;
+  border-left:1px solid var(--border);
+  background:var(--surface-2);
+}
+.rp-section-head {
+  font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 10px;
+}
+.qcap {
+  width:100%; background:var(--surface); border:1px solid var(--border-md);
+  border-radius:8px; padding:8px 10px; font-family:inherit; font-size:12px;
+  color:var(--text-1); resize:none; min-height:90px; outline:none;
+  transition:border-color .15s;
+}
+.qcap:focus { border-color:var(--accent); }
+.rp-empty { text-align:center; color:var(--text-3); font-size:12px; padding:20px 0; }
+
+/* ── Misc ───────────────────────────────────────────────────────── */
+.divh { height:1px; background:var(--border); margin:12px 0; }
+.empty-st { text-align:center; padding:16px 0; color:var(--text-3); font-size:12px; }
+.subsec-head { font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+
+/* ── Toast ──────────────────────────────────────────────────────── */
+#toast {
+  position:fixed; bottom:22px; left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:rgba(20,20,20,.82); color:#fff;
+  padding:7px 16px; border-radius:22px; font-size:12px; font-weight:500;
+  opacity:0; transition:opacity .2s, transform .2s;
+  pointer-events:none; z-index:9999;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── Scrollbars ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:rgba(0,0,0,.14); border-radius:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width:1000px) {
+  :root { --rp-w:0px; }
+  #right-panel { display:none; }
+  #app-layout  { grid-template-columns: var(--sb-w) 1fr; }
+}
+@media (max-width:640px) {
+  #app-layout { grid-template-columns:1fr; }
+  #sidebar    { display:none; }
+  #workspace  { padding:12px 14px; }
+}
+  </style>
 </head>
 <body>
-    <h1>Welcome to Meeting Hub v2</h1>
-    <p>Your content goes here.</p>
-    <script>
-        // Your JavaScript code goes here.
-        document.addEventListener('DOMContentLoaded', function(){ try{ loadState(); renderApp(); } catch(e){ console.error(e); document.body.innerHTML='<pre style="padding:12px">'+(e&&e.stack?e.stack:e)+'</pre>'; } });
-    </script>
+
+<!-- ── Top Navigation ────────────────────────────────────────────── -->
+<nav id="topnav">
+  <span id="nav-hub-icon" class="icon" style="color:var(--accent)"></span>
+  <span style="font-weight:700;font-size:14px;white-space:nowrap">Meeting Hub <span style="font-size:11px;font-weight:500;color:var(--text-3);vertical-align:middle">v2</span></span>
+  <div class="nav-divider"></div>
+  <input id="nav-title-inp" class="fi" type="text" placeholder="Untitled Meeting"
+    style="flex:1;max-width:320px;border:none;background:transparent;font-size:13px;font-weight:500;padding:3px 0;outline:none;color:#3A3A3C"
+    oninput="state.meeting.title=this.value;scheduleSave()">
+
+  <div class="nav-progress" style="flex-shrink:0">
+    <span id="nav-progress-label" style="font-size:11px;color:var(--text-2)"></span>
+    <div class="nav-progress-bar"><div class="nav-progress-fill" id="nav-progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+    <button class="btn btn-sm" id="btn-reset"  onclick="resetToDemo()"></button>
+    <button class="btn btn-sm" id="btn-export" onclick="exportJSON()"></button>
+    <button class="btn btn-sm" id="btn-import" onclick="triggerImport()"></button>
+    <button class="btn btn-sm" id="btn-md"     onclick="exportMarkdown()" title="Export Markdown"></button>
+  </div>
+</nav>
+
+<input type="file" id="import-input" accept=".json" style="display:none">
+
+<!-- ── App Layout ────────────────────────────────────────────────── -->
+<div id="app-layout">
+  <aside id="sidebar"><div id="sb-nav"></div></aside>
+  <main id="workspace"><div id="ws-content"></div></main>
+  <aside id="right-panel"><div id="rp-content"></div></aside>
+</div>
+
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ── Inline SVG icon system ─────────────────────────────────────── */
+function svg(paths, size=16, extra='') {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ${extra}>${paths}</svg>`;
+}
+const IC = {
+  hub:      () => svg(`<circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="2" r="1.2"/><circle cx="14" cy="5" r="1.2"/><circle cx="14" cy="11" r="1.2"/><circle cx="8" cy="14" r="1.2"/><circle cx="2" cy="11" r="1.2"/><circle cx="2" cy="5" r="1.2"/><line x1="8" y1="5.5" x2="8" y2="3.2"/><line x1="10.3" y1="6.7" x2="12.8" y2="5.4"/><line x1="10.3" y1="9.3" x2="12.8" y2="10.6"/><line x1="8" y1="10.5" x2="8" y2="12.8"/><line x1="5.7" y1="9.3" x2="3.2" y2="10.6"/><line x1="5.7" y1="6.7" x2="3.2" y2="5.4"/>`),
+  chevron:  () => svg(`<polyline points="6 12 10 8 6 4"/>`),
+  add:      () => svg(`<line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/>`),
+  close:    () => svg(`<line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/>`),
+  trash:    () => svg(`<polyline points="3 5 5 5 13 5"/><path d="M6 5V4a1 1 0 011-1h2a1 1 0 011 1v1"/><path d="M4.5 5l.7 8a1 1 0 001 .9h3.6a1 1 0 001-.9l.7-8"/>`),
+  check:    () => svg(`<polyline points="3 8 6.5 11.5 13 5"/>`),
+  restart:  () => svg(`<path d="M12 8A4 4 0 014 8"/><polyline points="2 6 4 8 6 6"/><path d="M4 8a4 4 0 018 0"/>`),
+  download: () => svg(`<path d="M8 3v7M5 7l3 3 3-3"/><path d="M3 13h10"/>`),
+  upload:   () => svg(`<path d="M8 13V6M5 9l3-3 3 3"/><path d="M3 13h10"/>`),
+  doc:      () => svg(`<path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V5z"/><polyline points="9 2 9 5 12 5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="8" y2="10"/>`),
+  bulb:     () => svg(`<path d="M6 14h4M6.5 11.5c-.3-1-.5-1.8-.5-2.5a4 4 0 018 0c0 .7-.2 1.5-.5 2.5"/><path d="M6.5 11.5h5a1 1 0 010 2h-5a1 1 0 010-2z"/>`),
+  question: () => svg(`<circle cx="8" cy="8" r="6"/><path d="M6.5 6.5a2 2 0 012.5-1.3c1 .3 1.5 1.3 1 2.2C9.5 8.2 8 8.8 8 10"/><circle cx="8" cy="12.5" r=".5" fill="currentColor" stroke="none"/>`),
+  reframe:  () => svg(`<path d="M12 8A4 4 0 014 8"/><polyline points="12 4 12 8 8 8"/>`),
+  notes:    () => svg(`<path d="M4 6h8M4 9h8M4 12h5"/><rect x="2" y="3" width="12" height="12" rx="1.5"/>`),
+  schedule: () => svg(`<circle cx="8" cy="8" r="6"/><polyline points="8 5 8 8 10.5 8"/>`),
+  play:     () => svg(`<polygon points="5 3 15 8 5 13" fill="currentColor" stroke="none"/>`),
+};
+function icon(name, size=16, color='') {
+  const fn = IC[name];
+  if (!fn) return '';
+  const raw = fn().replace('<svg ', `<svg style="width:${size}px;height:${size}px;flex-shrink:0${color?';color:'+color:''};" `);
+  return `<span class="icon">${raw}</span>`;
+}
+
+function injectNavIcons() {
+  document.getElementById('nav-hub-icon').outerHTML = icon('hub', 20, 'var(--accent)');
+  document.getElementById('btn-reset').innerHTML  = `${icon('restart',13)} Reset`;
+  document.getElementById('btn-export').innerHTML = `${icon('download',13)} Export`;
+  document.getElementById('btn-import').innerHTML = `${icon('upload',13)} Import`;
+  document.getElementById('btn-md').innerHTML     = icon('doc',13);
+}
+
+/* ── Demo Data ──────────────────────────────────────────────────── */
+const DEMO_MTG = {
+  title: "Exploratory Alignment: AI in Healthcare Strategy",
+  date:  "2026-03-18",
+  duration_minutes: 40,
+  blocks: [
+    {
+      id: "b1",
+      title: "Introductions & Context Setting",
+      duration: 5,
+      notes: "",
+      guidance: {
+        talking_points: [
+          "Briefly share role and current focus (IMD program + AI visualization tools)",
+          "Acknowledge the LinkedIn origin — warm intro through healthtech community",
+          "Establish tone: exploratory, no fixed agenda, following curiosity"
+        ],
+        questions: [
+          "Kellen, what's the best use of our 40 minutes from your perspective?",
+          "What does your role as VP of AI Enablement actually mean in practice day-to-day?"
+        ],
+        reframe: "If introductions run long, steer with: 'Let's capture the rest as context while we go — what's the one thing about your work you'd want me to hold in mind?'"
+      },
+      done: false
+    },
+    {
+      id: "b2",
+      title: "SOPHiA's AI Enablement Landscape",
+      duration: 10,
+      notes: "",
+      guidance: {
+        talking_points: [
+          "SOPHiA DDM as a neutral intelligence platform across genomics, imaging, clinical data",
+          "Adoption reported at ~40% active usage — is that a success ceiling or a warning signal?",
+          "Technical deployment is solid; the challenge is now depth of use, not breadth"
+        ],
+        questions: [
+          "Where does adoption friction actually occur — technical, interface, or cultural?",
+          "What does 'AI enablement' look like when rollout is already progressing well?",
+          "How do clinicians navigate multimodal outputs in practice?"
+        ],
+        reframe: "If the conversation goes too technical, steer with: 'Help me understand the human side of this — what does a clinician's day look like before and after SOPHiA?'"
+      },
+      done: false
+    },
+    {
+      id: "b3",
+      title: "Change Management Lens on Clinical AI",
+      duration: 10,
+      notes: "",
+      guidance: {
+        talking_points: [
+          "The Working Triangle: Change Management × AI Adoption × Business Reality",
+          "AI adoption fails not at the model level but at the human–machine interface",
+          "Interface as leverage: maps over lists, interaction over generation, attention management",
+          "Trust is built through explainability + predictability + user control — not accuracy alone"
+        ],
+        questions: [
+          "Where does your current approach most overlap with a change management lens?",
+          "Is there a version of 'serendipity-driven' discovery that works in clinical contexts?",
+          "What's the change management equivalent of a 'model confidence score'?"
+        ],
+        reframe: "If the framework feels too abstract, anchor with: 'Let me make it concrete — in your last deployment, what was the moment where the model was right but the workflow wasn't?'"
+      },
+      done: false
+    },
+    {
+      id: "b4",
+      title: "Collision Zone: Overlap & Tension Exploration",
+      duration: 10,
+      notes: "",
+      guidance: {
+        talking_points: [
+          "Shared tension: technical capability outpaces human operability — widening gap",
+          "Both care about trust-building, but approach it from different angles",
+          "Platform neutrality (SOPHiA) vs. opinionated workflow guidance (Change Management)",
+          "Serendipity-driven navigation as a potential bridge concept"
+        ],
+        questions: [
+          "What's the most counterintuitive thing you've learned about AI adoption at scale?",
+          "Where do you see the biggest untapped leverage in your current approach?",
+          "If you could change one thing about how clinicians interact with AI outputs, what would it be?"
+        ],
+        reframe: "If conversation gets stuck on differences, try: 'Let's assume we're working together on this — what's the first thing we'd build?'"
+      },
+      done: false
+    },
+    {
+      id: "b5",
+      title: "Next Steps & Follow-up",
+      duration: 5,
+      notes: "",
+      guidance: {
+        talking_points: [
+          "Recap the 2–3 strongest overlap moments from the conversation",
+          "Clinical AI Adoption Playbook as a potential co-creation project",
+          "Propose a monthly check-in call to continue the dialogue"
+        ],
+        questions: [
+          "What would make a follow-up conversation worth your time?",
+          "Is there someone on your team I should also talk to about the adoption challenge?",
+          "What's the one thing you'd want me to come back with prepared?"
+        ],
+        reframe: "If time runs short: 'We could use 5 minutes to define the one question we most want to answer together — and make that the agenda for next time.'"
+      },
+      done: false
+    }
+  ]
+};
+
+const DEMO_UI = {
+  currentBlockId: "b1",
+  expanded: ["b1","b2","b3","b4","b5"],
+  quick_capture: ""
+};
+
+/* ── State & Persistence ────────────────────────────────────────── */
+const LS_MTG = 'meetingHubDataV2';
+const LS_UI  = 'meetingHubUIStateV2';
+let state = { meeting: null, ui: null };
+
+function loadState() {
+  try {
+    const d = localStorage.getItem(LS_MTG);
+    const u = localStorage.getItem(LS_UI);
+    state.meeting = d ? JSON.parse(d) : deepClone(DEMO_MTG);
+    state.ui      = u ? JSON.parse(u) : deepClone(DEMO_UI);
+  } catch {
+    state.meeting = deepClone(DEMO_MTG);
+    state.ui      = deepClone(DEMO_UI);
+  }
+  // Ensure UI has expanded list
+  if (!Array.isArray(state.ui.expanded)) state.ui.expanded = [];
+  // Ensure currentBlockId points to a valid block
+  const ids = (state.meeting.blocks||[]).map(b=>b.id);
+  if (!ids.includes(state.ui.currentBlockId)) state.ui.currentBlockId = ids[0] || null;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(LS_MTG, JSON.stringify(state.meeting));
+    localStorage.setItem(LS_UI,  JSON.stringify(state.ui));
+  } catch {}
+}
+
+function resetToDemo() {
+  if (!confirm('Reset all data to demo content? This cannot be undone.')) return;
+  state.meeting = deepClone(DEMO_MTG);
+  state.ui      = deepClone(DEMO_UI);
+  saveState(); renderApp(); showToast('Reset to demo data');
+}
+
+/* ── Utilities ──────────────────────────────────────────────────── */
+function deepClone(o)  { return JSON.parse(JSON.stringify(o)); }
+function genId()       { return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+let _st = null;
+function scheduleSave() {
+  clearTimeout(_st);
+  _st = setTimeout(() => { saveState(); showToast('Saved'); }, 700);
+}
+
+let _tt = null;
+function showToast(msg, ms=2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function getBlock(id) { return (state.meeting.blocks||[]).find(b=>b.id===id) || null; }
+function blockIndex(id) { return (state.meeting.blocks||[]).findIndex(b=>b.id===id); }
+
+/* ── Progress helpers ───────────────────────────────────────────── */
+function doneCount() { return (state.meeting.blocks||[]).filter(b=>b.done).length; }
+function totalCount(){ return (state.meeting.blocks||[]).length; }
+function totalMinutes(){ return (state.meeting.blocks||[]).reduce((s,b)=>s+(b.duration||0),0); }
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER — TOP NAV
+══════════════════════════════════════════════════════════════════ */
+function renderTopNav() {
+  const m = state.meeting;
+  document.getElementById('nav-title-inp').value = m.title || '';
+  const done  = doneCount();
+  const total = totalCount();
+  const pct   = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById('nav-progress-label').textContent = `${done} / ${total}`;
+  document.getElementById('nav-progress-fill').style.width  = pct + '%';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER — SIDEBAR
+══════════════════════════════════════════════════════════════════ */
+function renderSidebar() {
+  const blocks = state.meeting.blocks || [];
+  const cur    = state.ui.currentBlockId;
+  let html = `<div class="sb-group">Agenda Blocks</div>`;
+  blocks.forEach((b, i) => {
+    const isActive = b.id === cur;
+    const isDone   = b.done;
+    html += `<div class="sb-block${isActive?' active':''}${isDone?' done-block':''}"
+        data-bid="${b.id}"
+        onclick="activateBlock('${b.id}')">
+      <div class="sb-block-num">${isDone ? icon('check',10,'var(--done-c)') : (i+1)}</div>
+      <div class="sb-block-body">
+        <div class="sb-block-title">${escHtml(b.title)||'Untitled Block'}</div>
+        <div class="sb-block-dur">${b.duration||0} min</div>
+      </div>
+    </div>`;
+  });
+
+  html += `<div style="padding:8px 8px 0">
+    <button class="btn btn-ghost btn-xs" onclick="addBlock()" style="width:100%;justify-content:center">
+      ${icon('add',13)} Add Block
+    </button>
+  </div>`;
+
+  html += `<div class="sb-spacer"></div>`;
+  const mins = totalMinutes();
+  html += `<div class="sb-meta">
+    <div style="margin-bottom:3px">${icon('schedule',12,'var(--text-3)')} <strong>${mins}</strong> min total</div>
+    <div style="color:var(--text-3);font-size:10px">${escHtml(state.meeting.date)||'No date set'}</div>
+  </div>`;
+
+  document.getElementById('sb-nav').innerHTML = html;
+}
+
+function updateSidebarActive(id) {
+  document.querySelectorAll('.sb-block').forEach(el => {
+    el.classList.toggle('active', el.dataset.bid === id);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER — WORKSPACE
+══════════════════════════════════════════════════════════════════ */
+function renderWorkspace() {
+  const blocks = state.meeting.blocks || [];
+  const cur    = state.ui.currentBlockId;
+
+  if (blocks.length === 0) {
+    document.getElementById('ws-content').innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--text-3)">
+        <div style="font-size:32px;margin-bottom:8px">📋</div>
+        <div style="font-size:14px;font-weight:500;color:var(--text-2);margin-bottom:6px">No blocks yet</div>
+        <div style="font-size:12px;margin-bottom:16px">Add your first agenda block to get started</div>
+        <button class="btn btn-primary" onclick="addBlock()">${icon('add',14)} Add First Block</button>
+      </div>`;
+    return;
+  }
+
+  const html = blocks.map((b, i) => {
+    const isActive   = b.id === cur;
+    const isExpanded = state.ui.expanded.includes(b.id);
+    const statusBadge = isActive && !b.done
+      ? `<span class="b-status-badge bsb-active">Live</span>`
+      : b.done
+        ? `<span class="b-status-badge bsb-done">Done</span>`
+        : '';
+
+    return `
+    <div id="bc-${b.id}" class="b-card${isActive?' active-block':''}${b.done?' done-card':''}${isExpanded?' expanded':''}">
+      <div class="b-header" onclick="toggleBlock('${b.id}')">
+        <span class="b-chev">${icon('chevron',15)}</span>
+        <div class="b-num">${b.done ? icon('check',10,'var(--done-c)') : (i+1)}</div>
+        <input class="b-title-inp" type="text" value="${escHtml(b.title)}"
+          placeholder="Block title"
+          data-bid="${b.id}" data-bf="title"
+          onclick="event.stopPropagation()"
+          oninput="onBlockFieldInput(event)">
+        <span class="b-dur-badge">${icon('schedule',11,'var(--text-3)')} ${b.duration||0} min</span>
+        ${statusBadge}
+        <button class="btn btn-del btn-xs" title="Delete block"
+          onclick="event.stopPropagation();removeBlock('${b.id}')">${icon('trash',13)}</button>
+      </div>
+      <div class="b-body" id="bb-${b.id}">
+        ${renderBlockBody(b, i)}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ws-content').innerHTML = html + `
+    <div style="text-align:center;padding:8px 0 16px">
+      <button class="btn btn-ghost btn-sm" onclick="addBlock()">${icon('add',14)} Add Block</button>
+    </div>`;
+}
+
+function renderBlockBody(b, i) {
+  return `
+  <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;margin-bottom:10px">
+    <div>
+      <div class="fl">Duration (minutes)</div>
+      <input class="fi fi-sm" type="number" min="1" value="${b.duration||''}"
+        placeholder="min" style="width:80px"
+        data-bid="${b.id}" data-bf="duration"
+        oninput="onBlockFieldInput(event)">
+    </div>
+    <div style="padding-top:18px;display:flex;gap:6px;align-items:center">
+      ${!b.done
+        ? `<button class="btn btn-success btn-sm" onclick="markDone('${b.id}',true)">
+             ${icon('check',13)} Mark Done
+           </button>`
+        : `<button class="btn btn-sm" onclick="markDone('${b.id}',false)">
+             ${icon('restart',13)} Reopen
+           </button>`
+      }
+      <button class="btn btn-sm btn-primary" onclick="activateBlock('${b.id}')" title="Set as active block">
+        ${icon('play',12)} Activate
+      </button>
+    </div>
+  </div>
+  <div>
+    <div class="fl">${icon('notes',12,'var(--text-3)')} Notes</div>
+    <textarea class="fta" placeholder="Notes captured during this block…"
+      data-bid="${b.id}" data-bf="notes"
+      oninput="onBlockFieldInput(event)">${escHtml(b.notes)}</textarea>
+  </div>`;
+}
+
+function rerenderBlockBody(id) {
+  const b = getBlock(id);
+  const idx = blockIndex(id);
+  if (!b) return;
+  const el = document.getElementById(`bb-${id}`);
+  if (el) el.innerHTML = renderBlockBody(b, idx);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER — RIGHT PANEL (Guidance)
+══════════════════════════════════════════════════════════════════ */
+function renderRightPanel() {
+  const cur = state.ui.currentBlockId;
+  const b   = getBlock(cur);
+  const rp  = document.getElementById('rp-content');
+
+  if (!b) {
+    rp.innerHTML = `<div class="rp-empty">Select a block to see its guidance</div>`;
+    return;
+  }
+
+  const g = b.guidance || { talking_points:[], questions:[], reframe:'' };
+  const tps = g.talking_points || [];
+  const qs  = g.questions || [];
+
+  rp.innerHTML = `
+    <div class="rp-section-head">Block Guidance</div>
+    <div style="font-size:12px;font-weight:600;color:var(--text-1);margin-bottom:12px">${escHtml(b.title)||'Untitled'}</div>
+
+    <div class="g-section">
+      <div class="g-label">${icon('bulb',12,'#5856D6')} Talking Points</div>
+      ${tps.map((tp,ti)=>`
+        <div class="g-item g-item-tp">
+          <div class="g-item-dot"></div>
+          <textarea class="g-item-inp" rows="2"
+            oninput="onGuidanceInput(event,'${b.id}','talking_points',${ti})"
+            placeholder="Talking point…">${escHtml(tp)}</textarea>
+          <button class="btn btn-del btn-xs" onclick="removeGuidanceItem('${b.id}','talking_points',${ti})">${icon('close',11)}</button>
+        </div>`).join('')}
+      ${tps.length===0?`<div class="empty-st" style="padding:8px 0">No talking points yet</div>`:''}
+      <button class="btn btn-ghost btn-xs" style="margin-top:2px" onclick="addGuidanceItem('${b.id}','talking_points')">${icon('add',12)} Add point</button>
+    </div>
+
+    <div class="divh"></div>
+
+    <div class="g-section">
+      <div class="g-label">${icon('question',12,'var(--live-c)')} Questions to Ask</div>
+      ${qs.map((q,qi)=>`
+        <div class="g-item g-item-q">
+          <div class="g-item-dot"></div>
+          <textarea class="g-item-inp" rows="2"
+            oninput="onGuidanceInput(event,'${b.id}','questions',${qi})"
+            placeholder="Question…">${escHtml(q)}</textarea>
+          <button class="btn btn-del btn-xs" onclick="removeGuidanceItem('${b.id}','questions',${qi})">${icon('close',11)}</button>
+        </div>`).join('')}
+      ${qs.length===0?`<div class="empty-st" style="padding:8px 0">No questions yet</div>`:''}
+      <button class="btn btn-ghost btn-xs" style="margin-top:2px" onclick="addGuidanceItem('${b.id}','questions')">${icon('add',12)} Add question</button>
+    </div>
+
+    <div class="divh"></div>
+
+    <div class="g-section">
+      <div class="g-label">${icon('reframe',12,'#FF6B35')} Reframe If Stuck</div>
+      <textarea class="fta fta-sm" style="font-size:12px"
+        placeholder="How to pivot if the conversation stalls…"
+        oninput="onReframeInput(event,'${b.id}')">${escHtml(g.reframe||'')}</textarea>
+    </div>
+
+    <div class="divh"></div>
+
+    <div>
+      <div class="g-label" style="margin-bottom:6px">Quick Capture</div>
+      <textarea class="qcap" placeholder="Capture thoughts here…"
+        oninput="state.ui.quick_capture=this.value;scheduleSave()">${escHtml(state.ui.quick_capture||'')}</textarea>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER APP
+══════════════════════════════════════════════════════════════════ */
+function renderApp() {
+  renderTopNav();
+  renderSidebar();
+  renderWorkspace();
+  renderRightPanel();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BLOCK MANAGEMENT
+══════════════════════════════════════════════════════════════════ */
+function activateBlock(id) {
+  state.ui.currentBlockId = id;
+  // Ensure block is expanded
+  if (!state.ui.expanded.includes(id)) state.ui.expanded.push(id);
+  saveState();
+
+  // Update active block card borders
+  document.querySelectorAll('.b-card').forEach(el => {
+    const bid = el.id.replace('bc-','');
+    el.classList.toggle('active-block', bid === id);
+  });
+  updateSidebarActive(id);
+  renderRightPanel();
+
+  // Scroll to block
+  const el = document.getElementById(`bc-${id}`);
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  showToast('Block activated');
+}
+
+function toggleBlock(id) {
+  const card = document.getElementById(`bc-${id}`);
+  if (!card) return;
+  const isOpen = card.classList.contains('expanded');
+  if (isOpen) {
+    card.classList.remove('expanded');
+    state.ui.expanded = state.ui.expanded.filter(x => x !== id);
+  } else {
+    card.classList.add('expanded');
+    if (!state.ui.expanded.includes(id)) state.ui.expanded.push(id);
+  }
+  saveState();
+}
+
+function addBlock() {
+  const blocks = state.meeting.blocks = state.meeting.blocks || [];
+  const newId = genId();
+  blocks.push({
+    id: newId,
+    title: 'New Block',
+    duration: 10,
+    notes: '',
+    guidance: { talking_points: [], questions: [], reframe: '' },
+    done: false
+  });
+  state.ui.expanded.push(newId);
+  saveState(); renderApp(); activateBlock(newId);
+}
+
+function removeBlock(id) {
+  if (!confirm('Remove this block?')) return;
+  const idx = blockIndex(id);
+  if (idx < 0) return;
+  state.meeting.blocks.splice(idx, 1);
+  state.ui.expanded = state.ui.expanded.filter(x => x !== id);
+  // Switch active block if needed
+  if (state.ui.currentBlockId === id) {
+    const remaining = state.meeting.blocks;
+    state.ui.currentBlockId = remaining.length > 0 ? (remaining[Math.min(idx, remaining.length-1)].id) : null;
+  }
+  saveState(); renderApp();
+}
+
+function markDone(id, done) {
+  const b = getBlock(id);
+  if (!b) return;
+  b.done = done;
+  saveState();
+  // Update card class
+  const card = document.getElementById(`bc-${id}`);
+  if (card) card.classList.toggle('done-card', done);
+  rerenderBlockBody(id);
+  renderTopNav();
+  renderSidebar();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INLINE FIELD UPDATES
+══════════════════════════════════════════════════════════════════ */
+function onBlockFieldInput(e) {
+  const bid = e.target.dataset.bid;
+  const bf  = e.target.dataset.bf;
+  if (!bid || !bf) return;
+  const b = getBlock(bid);
+  if (!b) return;
+  const val = bf === 'duration' ? Math.max(1, parseInt(e.target.value,10)||1) : e.target.value;
+  b[bf] = val;
+  scheduleSave();
+  if (bf === 'title') {
+    // Update sidebar block title without full re-render
+    const sbTitle = document.querySelector(`.sb-block[data-bid="${bid}"] .sb-block-title`);
+    if (sbTitle) sbTitle.textContent = e.target.value || 'Untitled Block';
+    // Update right panel header if this is the active block
+    if (state.ui.currentBlockId === bid) {
+      const rpTitle = document.querySelector('#rp-content [style*="font-weight:600"]');
+      if (rpTitle) rpTitle.textContent = e.target.value || 'Untitled';
+    }
+  }
+  if (bf === 'duration') {
+    // Update duration badge
+    const badge = document.querySelector(`#bc-${bid} .b-dur-badge`);
+    if (badge) badge.innerHTML = `${icon('schedule',11,'var(--text-3)')} ${val} min`;
+    // Update sidebar
+    const sbDur = document.querySelector(`.sb-block[data-bid="${bid}"] .sb-block-dur`);
+    if (sbDur) sbDur.textContent = `${val} min`;
+  }
+}
+
+function onGuidanceInput(e, bid, field, idx) {
+  const b = getBlock(bid);
+  if (!b) return;
+  if (!b.guidance) b.guidance = {};
+  if (!Array.isArray(b.guidance[field])) b.guidance[field] = [];
+  b.guidance[field][idx] = e.target.value;
+  scheduleSave();
+}
+
+function onReframeInput(e, bid) {
+  const b = getBlock(bid);
+  if (!b) return;
+  if (!b.guidance) b.guidance = {};
+  b.guidance.reframe = e.target.value;
+  scheduleSave();
+}
+
+function addGuidanceItem(bid, field) {
+  const b = getBlock(bid);
+  if (!b) return;
+  if (!b.guidance) b.guidance = {};
+  if (!Array.isArray(b.guidance[field])) b.guidance[field] = [];
+  b.guidance[field].push('');
+  saveState(); renderRightPanel();
+}
+
+function removeGuidanceItem(bid, field, idx) {
+  const b = getBlock(bid);
+  if (!b || !b.guidance || !Array.isArray(b.guidance[field])) return;
+  b.guidance[field].splice(idx, 1);
+  saveState(); renderRightPanel();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INTERSECTION OBSERVER (sidebar highlight on scroll)
+══════════════════════════════════════════════════════════════════ */
+function initIntersectionObserver() {
+  const root = document.getElementById('workspace');
+  const obs  = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id.replace('bc-','');
+        updateSidebarActive(id);
+      }
+    });
+  }, { root, rootMargin:'-10% 0px -80% 0px', threshold:0 });
+  (state.meeting.blocks||[]).forEach(b => {
+    const el = document.getElementById(`bc-${b.id}`);
+    if (el) obs.observe(el);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   IMPORT / EXPORT
+══════════════════════════════════════════════════════════════════ */
+function exportJSON() {
+  const data = {
+    meeting:    state.meeting,
+    ui_state:   state.ui,
+    version:    'v2',
+    exported_at: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `meeting_hub_v2_${(state.meeting.date||new Date().toISOString().slice(0,10))}.json`;
+  a.click(); URL.revokeObjectURL(url); showToast('Exported JSON');
+}
+
+function triggerImport() { document.getElementById('import-input').click(); }
+
+function handleImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.meeting)  state.meeting = data.meeting;
+      if (data.ui_state) state.ui = data.ui_state;
+      saveState(); renderApp(); showToast('Imported successfully');
+    } catch { showToast('Import failed — invalid JSON'); }
+    e.target.value = '';
+  };
+  r.readAsText(file);
+}
+
+function exportMarkdown() {
+  const m  = state.meeting;
+  const ts = m.date || new Date().toISOString().slice(0,10);
+  const lines = [
+    `# Meeting: ${m.title||'Untitled'}`,
+    `**Date:** ${m.date||ts}  |  **Duration:** ${totalMinutes()} min`,
+    `**Progress:** ${doneCount()} / ${totalCount()} blocks done`,
+    '',
+  ];
+  (m.blocks||[]).forEach((b,i) => {
+    const status = b.done ? '✅' : '⬜';
+    lines.push(`## ${status} Block ${i+1}: ${b.title||'Untitled'} (${b.duration||0} min)`);
+    if (b.notes) lines.push(`\n**Notes:**\n${b.notes}`);
+    const g = b.guidance || {};
+    if ((g.talking_points||[]).length) {
+      lines.push(`\n**Talking Points:**`);
+      (g.talking_points||[]).forEach(tp => lines.push(`- ${tp}`));
+    }
+    if ((g.questions||[]).length) {
+      lines.push(`\n**Questions:**`);
+      (g.questions||[]).forEach(q => lines.push(`- ${q}`));
+    }
+    if (g.reframe) lines.push(`\n**Reframe:** ${g.reframe}`);
+    lines.push('');
+  });
+  lines.push(`---\n_Exported from Meeting Hub v2 on ${new Date().toLocaleDateString()}_`);
+  const blob = new Blob([lines.join('\n')],{type:'text/markdown'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href=url; a.download=`meeting_hub_v2_${ts}.md`;
+  a.click(); URL.revokeObjectURL(url); showToast('Exported Markdown');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('import-input').addEventListener('change', handleImport);
+  loadState();
+  renderApp();
+  injectNavIcons();
+  initIntersectionObserver();
+});
+</script>
 </body>
 </html>
