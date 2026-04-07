@@ -515,7 +515,7 @@ function resetToDemo() {
 
 /* ── Utilities ──────────────────────────────────────────────────── */
 function deepClone(o)  { return JSON.parse(JSON.stringify(o)); }
-function genId()       { return 'b' + Math.random().toString(36).slice(2,9); }
+function genId()       { return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function escHtml(s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
@@ -566,6 +566,7 @@ function renderSidebar() {
     const isActive = b.id === cur;
     const isDone   = b.done;
     html += `<div class="sb-block${isActive?' active':''}${isDone?' done-block':''}"
+        data-bid="${b.id}"
         onclick="activateBlock('${b.id}')">
       <div class="sb-block-num">${isDone ? icon('check',10,'var(--done-c)') : (i+1)}</div>
       <div class="sb-block-body">
@@ -593,8 +594,7 @@ function renderSidebar() {
 
 function updateSidebarActive(id) {
   document.querySelectorAll('.sb-block').forEach(el => {
-    const isMe = el.getAttribute('onclick') === `activateBlock('${id}')`;
-    el.classList.toggle('active', isMe);
+    el.classList.toggle('active', el.dataset.bid === id);
   });
 }
 
@@ -859,12 +859,12 @@ function onBlockFieldInput(e) {
   if (!bid || !bf) return;
   const b = getBlock(bid);
   if (!b) return;
-  const val = bf === 'duration' ? (parseInt(e.target.value,10)||0) : e.target.value;
+  const val = bf === 'duration' ? Math.max(1, parseInt(e.target.value,10)||1) : e.target.value;
   b[bf] = val;
   scheduleSave();
   if (bf === 'title') {
     // Update sidebar block title without full re-render
-    const sbTitle = document.querySelector(`.sb-block[onclick="activateBlock('${bid}')"] .sb-block-title`);
+    const sbTitle = document.querySelector(`.sb-block[data-bid="${bid}"] .sb-block-title`);
     if (sbTitle) sbTitle.textContent = e.target.value || 'Untitled Block';
     // Update right panel header if this is the active block
     if (state.ui.currentBlockId === bid) {
@@ -877,7 +877,7 @@ function onBlockFieldInput(e) {
     const badge = document.querySelector(`#bc-${bid} .b-dur-badge`);
     if (badge) badge.innerHTML = `${icon('schedule',11,'var(--text-3)')} ${val} min`;
     // Update sidebar
-    const sbDur = document.querySelector(`.sb-block[onclick="activateBlock('${bid}')"] .sb-block-dur`);
+    const sbDur = document.querySelector(`.sb-block[data-bid="${bid}"] .sb-block-dur`);
     if (sbDur) sbDur.textContent = `${val} min`;
   }
 }
@@ -924,11 +924,7 @@ function initIntersectionObserver() {
     entries.forEach(e => {
       if (e.isIntersecting) {
         const id = e.target.id.replace('bc-','');
-        // Only update sidebar highlight, not currentBlockId (that's set by click)
-        document.querySelectorAll('.sb-block').forEach(el => {
-          const isMe = el.getAttribute('onclick') === `activateBlock('${id}')`;
-          // Only visually hint without changing active state
-        });
+        updateSidebarActive(id);
       }
     });
   }, { root, rootMargin:'-10% 0px -80% 0px', threshold:0 });
@@ -1001,7 +997,7 @@ function exportMarkdown() {
   lines.push(`---\n_Exported from Meeting Hub v2 on ${new Date().toLocaleDateString()}_`);
   const blob = new Blob([lines.join('\n')],{type:'text/markdown'});
   const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a'); a.href=url; a.download=`meeting_v2_${ts}.md`;
+  const a    = document.createElement('a'); a.href=url; a.download=`meeting_hub_v2_${ts}.md`;
   a.click(); URL.revokeObjectURL(url); showToast('Exported Markdown');
 }
 
