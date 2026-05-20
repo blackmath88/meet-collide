@@ -127,6 +127,15 @@ body{background:var(--bg);color:var(--text-1);font-family:var(--font-body);-webk
 .footer-mark{opacity:.3}
 .footer-text{font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-meta)}
 
+/* Prompt section */
+.prompt-tabs{display:flex;gap:2px;margin-bottom:12px}
+.prompt-tab{font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:var(--surface);border:1px solid var(--border);color:var(--text-meta);padding:6px 16px;cursor:pointer;transition:all .2s var(--ease);border-radius:4px 4px 0 0}
+.prompt-tab.on{color:var(--text-2);border-bottom-color:transparent;background:var(--surface-2)}
+.prompt-box{background:var(--surface);border:1px solid var(--border);border-radius:0 8px 8px 8px;padding:20px;max-height:340px;overflow-y:auto;margin-bottom:16px;position:relative}
+.prompt-box pre{font-family:var(--font-mono);font-size:10px;line-height:1.65;color:var(--text-2);white-space:pre-wrap;word-break:break-word;margin:0}
+.prompt-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.prompt-hint{font-family:var(--font-mono);font-size:9px;color:var(--text-meta);letter-spacing:.04em}
+
 /* Reveal animation */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity 1s var(--ease),transform 1s var(--ease)}.reveal.vis{opacity:1;transform:translateY(0)}
 </style>
@@ -141,6 +150,7 @@ body{background:var(--bg);color:var(--text-1);font-family:var(--font-body);-webk
   </div>
   <span class="nav-spacer"></span>
   <a href="#how" class="nav-link" data-i="nav_how">How it works</a>
+  <a href="#prompt" class="nav-link" data-i="nav_prompt">Get prompt</a>
   <a href="#collide" class="nav-link" data-i="nav_collide">Collide</a>
   <div class="toggle-pill" id="lang-toggle">
     <button class="on" onclick="setLang('en')">EN</button>
@@ -161,7 +171,7 @@ body{background:var(--bg);color:var(--text-1);font-family:var(--font-body);-webk
     <h1 class="hero-h1" id="hero-h1"></h1>
     <p class="hero-sub" data-i="hero_sub"></p>
     <div class="hero-actions">
-      <a href="#collide" class="btn-primary" data-i="hero_cta">Start a collision →</a>
+      <a href="#prompt" class="btn-primary" data-i="hero_cta">Get the prompt →</a>
       <a href="#how" class="btn-ghost" data-i="hero_learn">How it works</a>
     </div>
   </div>
@@ -177,6 +187,23 @@ body{background:var(--bg);color:var(--text-1);font-family:var(--font-body);-webk
     <div class="step-card reveal"><div class="step-num">01</div><div class="step-title" data-i="step1_title">Generate your card</div><div class="step-desc" data-i="step1_desc"></div></div>
     <div class="step-card reveal"><div class="step-num">02</div><div class="step-title" data-i="step2_title">Share & collect</div><div class="step-desc" data-i="step2_desc"></div></div>
     <div class="step-card reveal"><div class="step-num">03</div><div class="step-title" data-i="step3_title">Collide & meet</div><div class="step-desc" data-i="step3_desc"></div></div>
+  </div>
+</section>
+
+<!-- ═══ GET THE PROMPT ═══ -->
+<section id="prompt" class="section">
+  <div class="section-label" data-i="prompt_label">Step 1 — Get the prompt</div>
+  <p class="collide-intro" data-i="prompt_intro"></p>
+  <div class="prompt-tabs">
+    <button class="prompt-tab on" onclick="setPromptTab('en')">English</button>
+    <button class="prompt-tab" onclick="setPromptTab('de')">Deutsch</button>
+  </div>
+  <div class="prompt-box" id="prompt-box">
+    <pre id="prompt-text"></pre>
+  </div>
+  <div class="prompt-actions">
+    <button class="btn-primary" onclick="copyPrompt()" id="btn-copy" data-i="prompt_copy">Copy prompt</button>
+    <span class="prompt-hint" data-i="prompt_hint"></span>
   </div>
 </section>
 
@@ -238,11 +265,11 @@ body{background:var(--bg);color:var(--text-1);font-family:var(--font-body);-webk
 /* ══ i18n ══════════════════════════════════ */
 const I={
 en:{
-  nav_how:'How it works',nav_collide:'Collide',
+  nav_how:'How it works',nav_collide:'Collide',nav_prompt:'Get prompt',
   hero_eyebrow:'Skip the small talk',
   hero_h1:'Discover what connects you<br><span class="dim">before you even meet.</span>',
   hero_sub:'Each person generates a collision card with their AI assistant. Paste both cards here. The engine finds where your expertise, interests, and hidden passions overlap — and gives you conversation starters that skip straight to the good stuff.',
-  hero_cta:'Start a collision →',hero_learn:'How it works',
+  hero_cta:'Get the prompt →',hero_learn:'How it works',
   how_label:'How it works',
   step1_title:'Generate your card',step1_desc:'Paste the persona builder prompt into any AI you use — Claude, ChatGPT, Gemini. It asks you a few fun questions and generates a structured collision card. Takes about 5 minutes.',
   step2_title:'Share & collect',step2_desc:'Send the invite to the person you\'re meeting. They generate their own card with their AI. You both paste your JSONs here.',
@@ -254,7 +281,11 @@ en:{
   feat_4:'<strong>Current obsessions</strong> — what has your attention right now',
   feat_5:'<strong>Easter eggs</strong> — the surprising, weird, delightful stuff that creates real connection',
   feat_6:'<strong>Meeting intent</strong> — what you\'re looking for, so the collision leads somewhere',
-  collide_label:'Start a collision',
+  prompt_label:'Step 1 — Get the prompt',
+  prompt_intro:'Copy this prompt and paste it as the first message into any AI — Claude, ChatGPT, Gemini. The AI will ask you a few questions and generate your collision card. Takes about 5 minutes. Then send the same prompt to the person you\'re meeting.',
+  prompt_copy:'Copy prompt to clipboard',
+  prompt_hint:'Paste this into Claude, ChatGPT, Gemini — any AI works.',
+  collide_label:'Step 2 — Start a collision',
   collide_intro:'Paste both collision card JSONs below. The engine runs entirely in your browser — no data is sent anywhere. The collision opens in a new tab that you can bookmark or share.',
   collide_btn:'Collide',hint_wait:'Paste both cards to activate',hint_ready:'Ready',
   demo_link:'Load demo collision',
@@ -262,11 +293,11 @@ en:{
   placeholder:'Paste collision card JSON...'
 },
 de:{
-  nav_how:'So funktioniert\'s',nav_collide:'Kollidieren',
+  nav_how:'So funktioniert\'s',nav_collide:'Kollidieren',nav_prompt:'Prompt holen',
   hero_eyebrow:'Smalltalk überspringen',
   hero_h1:'Entdecke, was euch verbindet<br><span class="dim">bevor ihr euch trefft.</span>',
   hero_sub:'Jede Person erstellt eine Collision Card mit ihrem KI-Assistenten. Beide Cards hier einfügen. Die Engine findet, wo sich eure Expertise, Interessen und verborgenen Leidenschaften überschneiden — und gibt euch Gesprächseinstiege, die direkt zum Guten führen.',
-  hero_cta:'Kollision starten →',hero_learn:'So funktioniert\'s',
+  hero_cta:'Prompt holen →',hero_learn:'So funktioniert\'s',
   how_label:'So funktioniert\'s',
   step1_title:'Card generieren',step1_desc:'Den Persona Builder Prompt in eine beliebige KI einfügen — Claude, ChatGPT, Gemini. Sie stellt ein paar Fragen und generiert eine strukturierte Collision Card. Dauert etwa 5 Minuten.',
   step2_title:'Teilen & sammeln',step2_desc:'Die Einladung an die Person schicken, die du triffst. Sie generiert ihre eigene Card mit ihrer KI. Beide JSONs hier einfügen.',
@@ -278,7 +309,11 @@ de:{
   feat_4:'<strong>Aktuelle Themen</strong> — was dich gerade beschäftigt',
   feat_5:'<strong>Easter Eggs</strong> — das Überraschende, Skurrile, das echte Verbindung schafft',
   feat_6:'<strong>Meeting-Intent</strong> — was du suchst, damit die Kollision irgendwo hinführt',
-  collide_label:'Kollision starten',
+  prompt_label:'Schritt 1 — Prompt holen',
+  prompt_intro:'Diesen Prompt kopieren und als erste Nachricht in eine beliebige KI einfügen — Claude, ChatGPT, Gemini. Die KI stellt dir ein paar Fragen und generiert deine Collision Card. Dauert etwa 5 Minuten. Dann den gleichen Prompt an die Person schicken, die du triffst.',
+  prompt_copy:'Prompt in Zwischenablage kopieren',
+  prompt_hint:'In Claude, ChatGPT, Gemini einfügen — jede KI funktioniert.',
+  collide_label:'Schritt 2 — Kollision starten',
   collide_intro:'Beide Collision Card JSONs unten einfügen. Die Engine läuft komplett im Browser — keine Daten werden gesendet. Die Kollision öffnet in einem neuen Tab, den du bookmarken oder teilen kannst.',
   collide_btn:'Kollidieren',hint_wait:'Beide Cards einfügen',hint_ready:'Bereit',
   demo_link:'Demo laden',
@@ -299,6 +334,36 @@ function applyI18n(){
   document.getElementById('json-a').placeholder=t('placeholder');
   document.getElementById('json-b').placeholder=t('placeholder');
   document.getElementById('collide-hint').textContent=cardA&&cardB?t('hint_ready'):t('hint_wait');
+  loadPromptText(currentPromptTab);
+}
+
+/* ══ Prompt viewer ═════════════════════════ */
+let currentPromptTab='en';
+const promptCache={};
+function setPromptTab(l){
+  currentPromptTab=l;
+  document.querySelectorAll('.prompt-tab').forEach(b=>b.classList.toggle('on',b.textContent.trim().toLowerCase().startsWith(l)));
+  loadPromptText(l);
+}
+function loadPromptText(l){
+  const file=l==='de'?'prompts/persona-builder-DE.md':'prompts/persona-builder-EN.md';
+  if(promptCache[l]){document.getElementById('prompt-text').textContent=extractPromptBlock(promptCache[l]);return}
+  fetch(file).then(r=>{if(!r.ok)throw new Error();return r.text()}).then(txt=>{promptCache[l]=txt;document.getElementById('prompt-text').textContent=extractPromptBlock(txt)}).catch(()=>{document.getElementById('prompt-text').textContent=l==='de'?'Prompt konnte nicht geladen werden. Datei prompts/persona-builder-DE.md nicht gefunden.':'Could not load prompt. File prompts/persona-builder-EN.md not found.'})
+}
+function extractPromptBlock(md){
+  // Extract the content between the first ``` and the last ``` (the system prompt block)
+  const m=md.match(/```\n([\s\S]*?)\n```/);
+  return m?m[1].trim():md;
+}
+function copyPrompt(){
+  const text=document.getElementById('prompt-text').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('btn-copy');
+    const orig=btn.textContent;
+    btn.textContent=currentPromptTab==='de'?'✓ Kopiert!':'✓ Copied!';
+    btn.style.background='var(--teal)';
+    setTimeout(()=>{btn.textContent=orig;btn.style.background=''},1800);
+  });
 }
 
 /* ══ Theme ═════════════════════════════════ */
