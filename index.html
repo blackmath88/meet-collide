@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meet & Collide — Skip the small talk</title>
+<meta name="description" content="Discover what you have in common before you meet. Two AI-generated persona cards collide to surface shared interests, mental models, and conversation starters.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='43.5' height='43.5' rx='1.5' fill='%231a7a6d'/><rect x='51.5' y='5' width='43.5' height='43.5' rx='1.5' fill='%233d1f47'/><rect x='5' y='51.5' width='43.5' height='43.5' rx='1.5' fill='%233d1f47'/><path d='M51.5 95 Q51.5 51.5 95 51.5 L95 95 Z' fill='%23d4416b'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Inter:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   THEME TOKENS
+   ══════════════════════════════════════════ */
+:root{--nav-h:48px;--teal:#1a7a6d;--teal-dark:#0f5c52;--purple:#5a3068;--purple-deep:#3d1f47;--accent:#d4416b;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'DM Mono',monospace;--ease:cubic-bezier(.22,1,.36,1)}
+[data-theme="dark"]{--bg:#050505;--bg-2:#0a0a0f;--surface:rgba(255,255,255,.035);--surface-2:rgba(255,255,255,.02);--border:rgba(255,255,255,.07);--border-md:rgba(255,255,255,.12);--text-1:rgba(255,255,255,.95);--text-2:rgba(255,255,255,.65);--text-3:rgba(255,255,255,.4);--text-meta:rgba(255,255,255,.22);--text-ghost:rgba(255,255,255,.07);--card-hover:rgba(255,255,255,.05);--overlay-bg:rgba(5,5,5,.96);--src-a-bg:rgba(26,122,109,.12);--src-a-text:var(--teal);--src-b-bg:rgba(90,48,104,.15);--src-b-text:rgba(180,140,210,.7);--nav-bg:rgba(5,5,5,.92);--hero-glow-a:rgba(26,122,109,.06);--hero-glow-b:rgba(90,48,104,.06)}
+[data-theme="light"]{--bg:#F5F5F7;--bg-2:#fff;--surface:rgba(0,0,0,.03);--surface-2:rgba(0,0,0,.015);--border:rgba(0,0,0,.08);--border-md:rgba(0,0,0,.13);--text-1:rgba(0,0,0,.88);--text-2:rgba(0,0,0,.55);--text-3:rgba(0,0,0,.38);--text-meta:rgba(0,0,0,.2);--text-ghost:rgba(0,0,0,.06);--card-hover:rgba(0,0,0,.04);--overlay-bg:rgba(245,245,247,.97);--src-a-bg:rgba(26,122,109,.1);--src-a-text:#0f5c52;--src-b-bg:rgba(90,48,104,.08);--src-b-text:#5a3068;--nav-bg:rgba(255,255,255,.92);--hero-glow-a:rgba(26,122,109,.08);--hero-glow-b:rgba(90,48,104,.08)}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text-1);font-family:var(--font-body);-webkit-font-smoothing:antialiased;transition:background .4s var(--ease),color .4s var(--ease)}
+::selection{background:var(--teal);color:#fff}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--text-ghost);border-radius:2px}
+
+/* ══════════════════════════════════════════
+   NAV
+   ══════════════════════════════════════════ */
+#nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:200;display:flex;align-items:center;padding:0 clamp(16px,4vw,48px);gap:10px;transition:background .5s var(--ease),backdrop-filter .5s var(--ease)}
+#nav.scrolled{background:var(--nav-bg);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom:1px solid var(--border)}
+.nav-mark{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.wordmark{font-family:var(--font-display);font-size:13px;font-weight:500;color:var(--text-1);letter-spacing:-.01em}.wordmark .hi{font-weight:300;color:var(--accent)}
+.nav-spacer{flex:1}
+.toggle-pill{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;flex-shrink:0}
+.toggle-pill button{font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;background:none;border:none;color:var(--text-meta);padding:4px 10px;cursor:pointer;transition:all .2s var(--ease)}
+.toggle-pill button.on{color:var(--text-2);font-weight:400}
+.nav-link{font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);text-decoration:none;padding:4px 8px;transition:color .2s}.nav-link:hover{color:var(--text-1)}
+
+/* ══════════════════════════════════════════
+   HERO
+   ══════════════════════════════════════════ */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:calc(var(--nav-h) + 40px) clamp(24px,6vw,72px) 60px;position:relative;overflow:hidden}
+.hero-glow{position:absolute;width:500px;height:500px;border-radius:50%;filter:blur(120px);pointer-events:none;opacity:.7}
+.hero-glow.a{background:var(--hero-glow-a);top:20%;left:15%}
+.hero-glow.b{background:var(--hero-glow-b);top:30%;right:15%}
+.hero-content{position:relative;z-index:1;max-width:680px}
+.hero-eyebrow{font-family:var(--font-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);margin-bottom:16px}
+.hero-h1{font-family:var(--font-display);font-size:clamp(2rem,5.5vw,4.2rem);font-weight:300;letter-spacing:-.045em;line-height:1.1;color:var(--text-1);margin-bottom:20px}
+.hero-h1 .dim{color:var(--text-3)}
+.hero-sub{font-size:clamp(14px,1.4vw,17px);color:var(--text-2);line-height:1.65;max-width:520px;margin-bottom:40px;font-weight:300}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn-primary{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--accent);border:none;padding:14px 32px;border-radius:4px;cursor:pointer;transition:all .3s var(--ease);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-ghost{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-2);background:none;border:1px solid var(--border);padding:14px 28px;border-radius:4px;cursor:pointer;transition:all .3s var(--ease);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+.scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);opacity:.15;animation:drift 2s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+
+/* ══════════════════════════════════════════
+   STRIP DIVIDER
+   ══════════════════════════════════════════ */
+.strip{display:flex;gap:2px;padding:0 clamp(24px,6vw,72px)}
+.strip span{flex:1;height:1px;opacity:.18}.strip .st{background:var(--teal)}.strip .sp{background:var(--purple-deep)}.strip .std{background:var(--teal-dark)}.strip .sa{background:var(--accent);opacity:.45}
+
+/* ══════════════════════════════════════════
+   SECTIONS
+   ══════════════════════════════════════════ */
+.section{padding:80px clamp(24px,6vw,72px);max-width:960px;margin:0 auto}
+.section-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-meta);margin-bottom:32px}
+
+/* How it works */
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media(max-width:700px){.steps-grid{grid-template-columns:1fr}}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px 24px;transition:border-color .3s var(--ease)}
+.step-card:hover{border-color:var(--border-md)}
+.step-num{font-family:var(--font-display);font-size:32px;font-weight:300;color:var(--text-ghost);margin-bottom:12px}
+.step-card:hover .step-num{color:var(--teal);transition:color .3s}
+.step-title{font-family:var(--font-display);font-size:15px;font-weight:500;color:var(--text-1);margin-bottom:8px;letter-spacing:-.01em}
+.step-desc{font-size:13px;color:var(--text-2);line-height:1.55}
+
+/* What the card captures */
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:600px){.features-grid{grid-template-columns:1fr}}
+.feat{display:flex;gap:12px;align-items:flex-start;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:6px}
+.feat-dot{width:6px;height:6px;border-radius:1.5px;flex-shrink:0;margin-top:6px}
+.feat-text{font-size:13px;color:var(--text-2);line-height:1.5}
+.feat-text strong{color:var(--text-1);font-weight:500}
+
+/* ══════════════════════════════════════════
+   COLLIDE SECTION
+   ══════════════════════════════════════════ */
+#collide-section{padding:80px clamp(24px,6vw,72px);max-width:960px;margin:0 auto}
+.collide-intro{font-size:14px;color:var(--text-2);line-height:1.6;margin-bottom:32px;max-width:520px}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+@media(max-width:700px){.input-grid{grid-template-columns:1fr}}
+.in-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .3s var(--ease)}
+.in-card:hover{border-color:var(--border-md)}
+.in-card-head{padding:16px 20px 8px;display:flex;align-items:center;gap:8px}
+.in-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}.in-dot.a{background:var(--teal)}.in-dot.b{background:var(--purple)}
+.in-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.in-name{font-family:var(--font-display);font-size:14px;color:var(--text-2);margin-left:auto;opacity:0;transition:opacity .3s}
+.in-card.ok .in-name{opacity:1}
+.in-area{width:100%;height:200px;background:transparent;border:none;color:var(--text-1);font-family:var(--font-mono);font-size:10px;line-height:1.5;padding:6px 20px 16px;resize:vertical;outline:none;letter-spacing:.01em}
+.in-area::placeholder{color:var(--text-ghost)}.in-area:focus{background:var(--card-hover)}
+.in-status{padding:0 20px 12px;font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;min-height:18px}
+.in-status.valid{color:var(--teal)}.in-status.invalid{color:var(--accent)}
+.collide-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.btn-collide{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:transparent;color:var(--text-ghost);border:1px solid var(--text-ghost);padding:14px 32px;border-radius:4px;cursor:default;pointer-events:none;transition:all .5s var(--ease)}
+.btn-collide.ready{color:var(--accent);border-color:rgba(212,65,107,.3);cursor:pointer;pointer-events:all}
+.btn-collide.ready:hover{background:rgba(212,65,107,.08);border-color:rgba(212,65,107,.5)}
+.collide-hint{font-family:var(--font-mono);font-size:9px;color:var(--text-meta);letter-spacing:.04em}
+.demo-link{font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-meta);cursor:pointer;transition:color .3s;padding:5px 0;border-bottom:1px solid var(--border);margin-left:auto}
+.demo-link:hover{color:var(--teal)}
+
+/* Saved collisions */
+.saved-section{margin-top:48px}
+.saved-list{display:flex;flex-direction:column;gap:8px}
+.saved-card{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:border-color .3s var(--ease)}
+.saved-card:hover{border-color:var(--border-md)}
+.saved-names{font-family:var(--font-display);font-size:13px;color:var(--text-1);flex:1}
+.saved-date{font-family:var(--font-mono);font-size:8px;color:var(--text-meta);letter-spacing:.04em}
+.saved-badge{font-family:var(--font-mono);font-size:8px;color:var(--teal);letter-spacing:.04em}
+.saved-del{background:none;border:none;color:var(--text-meta);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;transition:color .2s}
+.saved-del:hover{color:var(--accent)}
+
+/* ══════════════════════════════════════════
+   FOOTER
+   ══════════════════════════════════════════ */
+#footer{padding:40px clamp(24px,6vw,72px);display:flex;align-items:center;gap:12px}
+.footer-mark{opacity:.3}
+.footer-text{font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-meta)}
+
+/* Reveal animation */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity 1s var(--ease),transform 1s var(--ease)}.reveal.vis{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav id="nav">
+  <div class="nav-mark">
+    <svg viewBox="0 0 100 100" width="15" height="15"><rect x="5" y="5" width="43.5" height="43.5" rx="1.5" fill="#1a7a6d"/><rect x="51.5" y="5" width="43.5" height="43.5" rx="1.5" fill="#3d1f47"/><rect x="5" y="51.5" width="43.5" height="43.5" rx="1.5" fill="#3d1f47"/><path d="M51.5 95 Q51.5 51.5 95 51.5 L95 95 Z" fill="#d4416b"/></svg>
+    <span class="wordmark">meet & collide<span class="hi">.ai</span></span>
+  </div>
+  <span class="nav-spacer"></span>
+  <a href="#how" class="nav-link" data-i="nav_how">How it works</a>
+  <a href="#collide" class="nav-link" data-i="nav_collide">Collide</a>
+  <div class="toggle-pill" id="lang-toggle">
+    <button class="on" onclick="setLang('en')">EN</button>
+    <button onclick="setLang('de')">DE</button>
+  </div>
+  <div class="toggle-pill" id="theme-toggle">
+    <button onclick="setTheme('light')">☀</button>
+    <button class="on" onclick="setTheme('dark')">☾</button>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div class="hero-glow a"></div>
+  <div class="hero-glow b"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow" data-i="hero_eyebrow">Skip the small talk</div>
+    <h1 class="hero-h1" id="hero-h1"></h1>
+    <p class="hero-sub" data-i="hero_sub"></p>
+    <div class="hero-actions">
+      <a href="#collide" class="btn-primary" data-i="hero_cta">Start a collision →</a>
+      <a href="#how" class="btn-ghost" data-i="hero_learn">How it works</a>
+    </div>
+  </div>
+  <div class="scroll-hint"><svg width="16" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 4v8M4 9l4 4 4-4"/></svg></div>
+</section>
+
+<div class="strip"><span class="st"></span><span class="sp"></span><span class="std"></span><span class="sp"></span><span class="st"></span><span class="sp"></span><span class="std"></span><span class="sp"></span><span class="sa"></span><span class="sp"></span><span class="st"></span><span class="std"></span><span class="sp"></span><span class="std"></span></div>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section id="how" class="section">
+  <div class="section-label" data-i="how_label">How it works</div>
+  <div class="steps-grid">
+    <div class="step-card reveal"><div class="step-num">01</div><div class="step-title" data-i="step1_title">Generate your card</div><div class="step-desc" data-i="step1_desc"></div></div>
+    <div class="step-card reveal"><div class="step-num">02</div><div class="step-title" data-i="step2_title">Share & collect</div><div class="step-desc" data-i="step2_desc"></div></div>
+    <div class="step-card reveal"><div class="step-num">03</div><div class="step-title" data-i="step3_title">Collide & meet</div><div class="step-desc" data-i="step3_desc"></div></div>
+  </div>
+</section>
+
+<!-- ═══ WHAT THE CARD CAPTURES ═══ -->
+<section class="section">
+  <div class="section-label" data-i="card_label">What the collision card captures</div>
+  <div class="features-grid">
+    <div class="feat reveal"><span class="feat-dot" style="background:var(--teal)"></span><div class="feat-text" data-i="feat_1"></div></div>
+    <div class="feat reveal"><span class="feat-dot" style="background:var(--teal-dark)"></span><div class="feat-text" data-i="feat_2"></div></div>
+    <div class="feat reveal"><span class="feat-dot" style="background:var(--purple)"></span><div class="feat-text" data-i="feat_3"></div></div>
+    <div class="feat reveal"><span class="feat-dot" style="background:var(--purple-deep)"></span><div class="feat-text" data-i="feat_4"></div></div>
+    <div class="feat reveal"><span class="feat-dot" style="background:var(--accent)"></span><div class="feat-text" data-i="feat_5"></div></div>
+    <div class="feat reveal"><span class="feat-dot" style="background:var(--teal)"></span><div class="feat-text" data-i="feat_6"></div></div>
+  </div>
+</section>
+
+<div class="strip"><span class="st"></span><span class="sp"></span><span class="std"></span><span class="sp"></span><span class="st"></span><span class="sp"></span><span class="std"></span><span class="sp"></span><span class="sa"></span><span class="sp"></span><span class="st"></span><span class="std"></span><span class="sp"></span><span class="std"></span></div>
+
+<!-- ═══ COLLIDE ═══ -->
+<section id="collide" class="section" style="max-width:960px">
+  <div class="section-label" data-i="collide_label">Start a collision</div>
+  <p class="collide-intro" data-i="collide_intro"></p>
+
+  <div class="input-grid">
+    <div class="in-card" id="card-a">
+      <div class="in-card-head"><span class="in-dot a"></span><span class="in-label">Person A</span><span class="in-name" id="name-a"></span></div>
+      <textarea class="in-area" id="json-a" spellcheck="false"></textarea>
+      <div class="in-status" id="status-a"></div>
+    </div>
+    <div class="in-card" id="card-b">
+      <div class="in-card-head"><span class="in-dot b"></span><span class="in-label">Person B</span><span class="in-name" id="name-b"></span></div>
+      <textarea class="in-area" id="json-b" spellcheck="false"></textarea>
+      <div class="in-status" id="status-b"></div>
+    </div>
+  </div>
+
+  <div class="collide-actions">
+    <button class="btn-collide" id="btn-collide" onclick="runCollision()" data-i="collide_btn"></button>
+    <span class="collide-hint" id="collide-hint"></span>
+    <span class="demo-link" onclick="loadDemo()" data-i="demo_link"></span>
+  </div>
+
+  <!-- Saved collisions -->
+  <div class="saved-section" id="saved-section" style="display:none">
+    <div class="section-label" data-i="saved_label">Saved collisions</div>
+    <div class="saved-list" id="saved-list"></div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer id="footer">
+  <svg viewBox="0 0 100 100" width="10" height="10" class="footer-mark"><rect x="5" y="5" width="43.5" height="43.5" rx="1.5" fill="#1a7a6d"/><rect x="51.5" y="5" width="43.5" height="43.5" rx="1.5" fill="#3d1f47"/><rect x="5" y="51.5" width="43.5" height="43.5" rx="1.5" fill="#3d1f47"/><path d="M51.5 95 Q51.5 51.5 95 51.5 L95 95 Z" fill="#d4416b"/></svg>
+  <span class="footer-text">© 2026 meet & collide · by bridge-work.ai · no data leaves your browser</span>
+</footer>
+
+<script>
+'use strict';
+
+/* ══ i18n ══════════════════════════════════ */
+const I={
+en:{
+  nav_how:'How it works',nav_collide:'Collide',
+  hero_eyebrow:'Skip the small talk',
+  hero_h1:'Discover what connects you<br><span class="dim">before you even meet.</span>',
+  hero_sub:'Each person generates a collision card with their AI assistant. Paste both cards here. The engine finds where your expertise, interests, and hidden passions overlap — and gives you conversation starters that skip straight to the good stuff.',
+  hero_cta:'Start a collision →',hero_learn:'How it works',
+  how_label:'How it works',
+  step1_title:'Generate your card',step1_desc:'Paste the persona builder prompt into any AI you use — Claude, ChatGPT, Gemini. It asks you a few fun questions and generates a structured collision card. Takes about 5 minutes.',
+  step2_title:'Share & collect',step2_desc:'Send the invite to the person you\'re meeting. They generate their own card with their AI. You both paste your JSONs here.',
+  step3_title:'Collide & meet',step3_desc:'The engine maps where you connect — shared mental models, overlapping obsessions, surprise easter eggs. Opens in a new tab with a D3 force graph and conversation starters.',
+  card_label:'What the collision card captures',
+  feat_1:'<strong>Background & expertise</strong> — what you actually know, not just your title',
+  feat_2:'<strong>Mental models</strong> — the frameworks you use to think, not the ones you claim',
+  feat_3:'<strong>Working style</strong> — how you collaborate, communicate, and make decisions',
+  feat_4:'<strong>Current obsessions</strong> — what has your attention right now',
+  feat_5:'<strong>Easter eggs</strong> — the surprising, weird, delightful stuff that creates real connection',
+  feat_6:'<strong>Meeting intent</strong> — what you\'re looking for, so the collision leads somewhere',
+  collide_label:'Start a collision',
+  collide_intro:'Paste both collision card JSONs below. The engine runs entirely in your browser — no data is sent anywhere. The collision opens in a new tab that you can bookmark or share.',
+  collide_btn:'Collide',hint_wait:'Paste both cards to activate',hint_ready:'Ready',
+  demo_link:'Load demo collision',
+  saved_label:'Your saved collisions',
+  placeholder:'Paste collision card JSON...'
+},
+de:{
+  nav_how:'So funktioniert\'s',nav_collide:'Kollidieren',
+  hero_eyebrow:'Smalltalk überspringen',
+  hero_h1:'Entdecke, was euch verbindet<br><span class="dim">bevor ihr euch trefft.</span>',
+  hero_sub:'Jede Person erstellt eine Collision Card mit ihrem KI-Assistenten. Beide Cards hier einfügen. Die Engine findet, wo sich eure Expertise, Interessen und verborgenen Leidenschaften überschneiden — und gibt euch Gesprächseinstiege, die direkt zum Guten führen.',
+  hero_cta:'Kollision starten →',hero_learn:'So funktioniert\'s',
+  how_label:'So funktioniert\'s',
+  step1_title:'Card generieren',step1_desc:'Den Persona Builder Prompt in eine beliebige KI einfügen — Claude, ChatGPT, Gemini. Sie stellt ein paar Fragen und generiert eine strukturierte Collision Card. Dauert etwa 5 Minuten.',
+  step2_title:'Teilen & sammeln',step2_desc:'Die Einladung an die Person schicken, die du triffst. Sie generiert ihre eigene Card mit ihrer KI. Beide JSONs hier einfügen.',
+  step3_title:'Kollidieren & treffen',step3_desc:'Die Engine zeigt, wo ihr euch trefft — geteilte Denkmodelle, gemeinsame Themen, überraschende Easter Eggs. Öffnet in einem neuen Tab mit D3-Visualisierung und Gesprächseinstiegen.',
+  card_label:'Was die Collision Card erfasst',
+  feat_1:'<strong>Hintergrund & Expertise</strong> — was du wirklich kannst, nicht nur dein Titel',
+  feat_2:'<strong>Denkmodelle</strong> — die Frameworks, mit denen du wirklich denkst',
+  feat_3:'<strong>Arbeitsstil</strong> — wie du zusammenarbeitest, kommunizierst, entscheidest',
+  feat_4:'<strong>Aktuelle Themen</strong> — was dich gerade beschäftigt',
+  feat_5:'<strong>Easter Eggs</strong> — das Überraschende, Skurrile, das echte Verbindung schafft',
+  feat_6:'<strong>Meeting-Intent</strong> — was du suchst, damit die Kollision irgendwo hinführt',
+  collide_label:'Kollision starten',
+  collide_intro:'Beide Collision Card JSONs unten einfügen. Die Engine läuft komplett im Browser — keine Daten werden gesendet. Die Kollision öffnet in einem neuen Tab, den du bookmarken oder teilen kannst.',
+  collide_btn:'Kollidieren',hint_wait:'Beide Cards einfügen',hint_ready:'Bereit',
+  demo_link:'Demo laden',
+  saved_label:'Gespeicherte Kollisionen',
+  placeholder:'Collision Card JSON einfügen...'
+}};
+
+let lang='en';
+function t(k){return I[lang]?.[k]||I.en[k]||k}
+function setLang(l){
+  lang=l;localStorage.setItem('mc-lang',l);
+  document.querySelectorAll('#lang-toggle button').forEach(b=>b.classList.toggle('on',b.textContent.trim()===l.toUpperCase()));
+  document.documentElement.lang=l;applyI18n()
+}
+function applyI18n(){
+  document.querySelectorAll('[data-i]').forEach(el=>{const k=el.dataset.i;const v=t(k);if(v)el.innerHTML=v});
+  document.getElementById('hero-h1').innerHTML=t('hero_h1');
+  document.getElementById('json-a').placeholder=t('placeholder');
+  document.getElementById('json-b').placeholder=t('placeholder');
+  document.getElementById('collide-hint').textContent=cardA&&cardB?t('hint_ready'):t('hint_wait');
+}
+
+/* ══ Theme ═════════════════════════════════ */
+function setTheme(th){
+  document.documentElement.setAttribute('data-theme',th);localStorage.setItem('mc-theme',th);
+  document.querySelectorAll('#theme-toggle button').forEach((b,i)=>b.classList.toggle('on',i===(th==='light'?0:1)))
+}
+
+/* ══ Nav scroll ════════════════════════════ */
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',window.scrollY>30));
+
+/* ══ Reveal on scroll ══════════════════════ */
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.05});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+/* ══ Validation ════════════════════════════ */
+let cardA=null,cardB=null;
+function validate(json,id){
+  const s=document.getElementById('status-'+id),n=document.getElementById('name-'+id),c=document.getElementById('card-'+id);
+  try{const d=JSON.parse(json);if(!d.identity?.name)throw new Error('Missing identity.name');s.textContent='✓ valid';s.className='in-status valid';n.textContent=d.identity.name.split(' ')[0];c.classList.add('ok');return d}
+  catch(e){s.textContent=e.message.substring(0,50);s.className='in-status invalid';n.textContent='';c.classList.remove('ok');return null}
+}
+document.getElementById('json-a').addEventListener('input',function(){cardA=validate(this.value,'a');updBtn()});
+document.getElementById('json-b').addEventListener('input',function(){cardB=validate(this.value,'b');updBtn()});
+function updBtn(){
+  const b=document.getElementById('btn-collide'),h=document.getElementById('collide-hint');
+  if(cardA&&cardB){b.classList.add('ready');h.textContent=t('hint_ready');h.style.color='var(--teal)'}
+  else{b.classList.remove('ready');h.textContent=t('hint_wait');h.style.color=''}
+}
+
+/* ══ Collision → new tab ═══════════════════ */
+function runCollision(){
+  if(!cardA||!cardB)return;
+  // Save to localStorage
+  const id='mc-'+Date.now();
+  const record={id,cardA,cardB,date:new Date().toISOString(),nameA:cardA.identity.name,nameB:cardB.identity.name,lang};
+  const saved=JSON.parse(localStorage.getItem('mc-saved')||'[]');
+  saved.unshift(record);
+  if(saved.length>20)saved.length=20;
+  localStorage.setItem('mc-saved',JSON.stringify(saved));
+  localStorage.setItem('mc-current',JSON.stringify(record));
+  renderSaved();
+  // Open collision viewer in new tab
+  window.open('collide.html','_blank');
+}
+
+/* ══ Saved collisions ══════════════════════ */
+function renderSaved(){
+  const saved=JSON.parse(localStorage.getItem('mc-saved')||'[]');
+  const sec=document.getElementById('saved-section');
+  const list=document.getElementById('saved-list');
+  if(!saved.length){sec.style.display='none';return}
+  sec.style.display='block';
+  list.innerHTML=saved.map(s=>{
+    const d=new Date(s.date);
+    const dateStr=d.toLocaleDateString(lang==='de'?'de-CH':'en-US',{day:'numeric',month:'short',year:'numeric'});
+    return`<div class="saved-card" onclick="openSaved('${s.id}')">
+      <span class="saved-names">${s.nameA.split(' ')[0]} × ${s.nameB.split(' ')[0]}</span>
+      <span class="saved-date">${dateStr}</span>
+      <button class="saved-del" onclick="event.stopPropagation();deleteSaved('${s.id}')" title="Delete">×</button>
+    </div>`
+  }).join('');
+}
+function openSaved(id){
+  const saved=JSON.parse(localStorage.getItem('mc-saved')||'[]');
+  const record=saved.find(s=>s.id===id);
+  if(record){localStorage.setItem('mc-current',JSON.stringify(record));window.open('collide.html','_blank')}
+}
+function deleteSaved(id){
+  let saved=JSON.parse(localStorage.getItem('mc-saved')||'[]');
+  saved=saved.filter(s=>s.id!==id);
+  localStorage.setItem('mc-saved',JSON.stringify(saved));
+  renderSaved();
+}
+
+/* ══ Demo ══════════════════════════════════ */
+function loadDemo(){
+  // Inline minimal demo cards — production version fetches from /demo/
+  fetch('demo-a.json').then(r=>r.ok?r.text():Promise.reject()).then(t=>{document.getElementById('json-a').value=t;cardA=validate(t,'a');updBtn()}).catch(()=>{document.getElementById('json-a').value='{"identity":{"name":"Demo Person A"},"mental_models":[],"easter_eggs":[]}';cardA=validate(document.getElementById('json-a').value,'a');updBtn()});
+  fetch('demo-b.json').then(r=>r.ok?r.text():Promise.reject()).then(t=>{document.getElementById('json-b').value=t;cardB=validate(t,'b');updBtn()}).catch(()=>{document.getElementById('json-b').value='{"identity":{"name":"Demo Person B"},"mental_models":[],"easter_eggs":[]}';cardB=validate(document.getElementById('json-b').value,'b');updBtn()});
+}
+
+/* ══ Init ══════════════════════════════════ */
+const savedLang=localStorage.getItem('mc-lang');if(savedLang)setLang(savedLang);else applyI18n();
+const savedTheme=localStorage.getItem('mc-theme');if(savedTheme)setTheme(savedTheme);
+renderSaved();
+</script>
+</body>
+</html>

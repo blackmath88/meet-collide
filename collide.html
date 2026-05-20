@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collision — Meet & Collide</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='43.5' height='43.5' rx='1.5' fill='%231a7a6d'/><rect x='51.5' y='5' width='43.5' height='43.5' rx='1.5' fill='%233d1f47'/><rect x='5' y='51.5' width='43.5' height='43.5' rx='1.5' fill='%233d1f47'/><path d='M51.5 95 Q51.5 51.5 95 51.5 L95 95 Z' fill='%23d4416b'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Inter:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="collide.css">
+</head>
+<body>
+<!-- This page reads collision data from localStorage('mc-current') -->
+<!-- It is the full v4 collision viewer (3-column layout, D3 graph, sidebar, right panel) -->
+<!-- Keeping it separate so it opens in its own tab/window -->
+
+<nav id="topnav">
+  <div class="nav-mark">
+    <svg viewBox="0 0 100 100" width="15" height="15"><rect x="5" y="5" width="43.5" height="43.5" rx="1.5" fill="#1a7a6d"/><rect x="51.5" y="5" width="43.5" height="43.5" rx="1.5" fill="#3d1f47"/><rect x="5" y="51.5" width="43.5" height="43.5" rx="1.5" fill="#3d1f47"/><path d="M51.5 95 Q51.5 51.5 95 51.5 L95 95 Z" fill="#d4416b"/></svg>
+    <span class="wordmark">meet & collide<span class="hi">.ai</span></span>
+  </div>
+  <div class="nav-div"></div>
+  <span class="nav-names" id="nav-names"></span>
+  <span class="nav-badge" id="nav-badge"></span>
+  <div class="toggle-pill" id="theme-toggle">
+    <button onclick="setTheme('light')">☀</button>
+    <button class="on" onclick="setTheme('dark')">☾</button>
+  </div>
+  <button class="nav-btn" onclick="downloadCollision()" id="btn-download">↓ Download</button>
+</nav>
+
+<div id="app">
+  <aside id="sidebar">
+    <div class="sb-label" id="sb-label-top">Strongest resonance</div>
+    <div id="sb-top"></div>
+    <div class="sb-label" id="sb-label-all" style="margin-top:6px">All collisions</div>
+    <div id="sb-all"></div>
+    <div class="sb-spacer"></div>
+    <div class="sb-footer" id="sb-footer"></div>
+  </aside>
+  <main id="canvas">
+    <div id="tooltip"><div class="tt-cat"></div><div class="tt-label"></div><div class="tt-text"></div></div>
+    <div id="empty-state" style="display:none;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-meta);font-family:var(--font-mono);font-size:11px;text-align:center;padding:40px">No collision data found.<br>Go back and start a collision first.</div>
+  </main>
+  <aside id="rpanel">
+    <div class="rp-section" id="rp-detail" style="display:none">
+      <div class="rp-label">Selected collision</div>
+      <div id="rp-detail-content"></div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-label">Conversation starters</div>
+      <div id="rp-questions"></div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-label">Surprise zone</div>
+      <div id="rp-eggs"></div>
+    </div>
+  </aside>
+</div>
+
+<script src="engine.js"></script>
+<script>
+'use strict';
+// Load collision data from localStorage
+const record = JSON.parse(localStorage.getItem('mc-current') || 'null');
+const savedTheme = localStorage.getItem('mc-theme');
+if (savedTheme) setTheme(savedTheme);
+
+if (record && record.cardA && record.cardB) {
+  document.title = `${record.nameA.split(' ')[0]} × ${record.nameB.split(' ')[0]} — Meet & Collide`;
+  initCollision(record.cardA, record.cardB, record.lang || 'en');
+} else {
+  document.getElementById('empty-state').style.display = 'flex';
+}
+
+function downloadCollision() {
+  if (!record) return;
+  const data = { exported_at: new Date().toISOString(), cardA: record.cardA, cardB: record.cardB, lang: record.lang };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `collision_${record.nameA.split(' ')[0]}_${record.nameB.split(' ')[0]}_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
