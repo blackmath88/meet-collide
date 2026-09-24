@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Collider — Offboard Yourself</title>
+<style>
+:root{--bg:#f6f4ee;--ink:#181816;--muted:#6f6b63;--line:#d8d3c8;--card:#fffdfa;--accent:#b83b5e;--accent2:#147d78}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:auto;padding:72px 24px 96px}.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(42px,8vw,84px);line-height:.96;letter-spacing:-.055em;margin:14px 0 22px;max-width:820px}h2{font-size:28px;letter-spacing:-.03em;margin:0 0 12px}
+.lead{font-size:20px;max-width:680px;color:#35332e}.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:42px 0}
+.step{border-top:1px solid var(--line);padding-top:14px}.n{font:600 12px/1 monospace;color:var(--accent);margin-bottom:10px}.step b{display:block}.step span{color:var(--muted);font-size:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:38px;box-shadow:0 10px 35px rgba(40,35,25,.05)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.btn{appearance:none;border:1px solid var(--ink);background:var(--ink);color:white;padding:11px 15px;border-radius:999px;font-weight:650;cursor:pointer}.btn.secondary{background:transparent;color:var(--ink);border-color:var(--line)}
+textarea{width:100%;height:360px;resize:vertical;border:0;border-top:1px solid var(--line);background:transparent;padding:18px 0 0;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#24221f;outline:none}
+.note{margin-top:14px;color:var(--muted);font-size:13px}.why{display:grid;grid-template-columns:1.2fr .8fr;gap:28px;margin-top:58px}.why p{margin-top:0;color:#4c4942}.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:6px 10px;margin:4px 4px 0 0;font-size:12px}
+footer{border-top:1px solid var(--line);margin-top:72px;padding-top:20px;color:var(--muted);font-size:13px}
+@media(max-width:720px){main{padding-top:42px}.flow,.why{grid-template-columns:1fr}textarea{height:440px}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Collider · shared context before shared work</div>
+<h1>Offboard yourself.</h1>
+<p class="lead">Give your AI one prompt. Get back one self-contained Markdown file that lets the rest of the room meet the useful version of you before the introductions even start.</p>
+
+<div class="flow">
+  <div class="step"><div class="n">01</div><b>Copy the prompt</b><span>Use the AI assistant that knows you best.</span></div>
+  <div class="step"><div class="n">02</div><b>Get your .md</b><span>Review it. Remove anything you do not want to share.</span></div>
+  <div class="step"><div class="n">03</div><b>Bring it to Collider</b><span>Now the group starts with context, not small talk.</span></div>
+</div>
+
+<section class="panel">
+  <div class="eyebrow">The prompt</div>
+  <h2>Make my Collider offboard</h2>
+  <div class="actions">
+    <button class="btn" id="copy">Copy prompt</button>
+    <button class="btn secondary" id="download">Download prompt.md</button>
+  </div>
+  <textarea id="prompt" spellcheck="false"></textarea>
+  <div class="note">The output is Markdown on purpose: readable by people, portable between tools, and easy for another model to ingest later.</div>
+</section>
+
+<section class="why">
+  <div>
+    <div class="eyebrow">Why Markdown now?</div>
+    <h2>Human-readable is the interface. Structure is still there.</h2>
+    <p>The old Collider card hid the useful structure inside JSON. For a room full of people, the headings can be the schema. You can read the files directly, render them as cards, or merge a whole folder into a group brief later.</p>
+  </div>
+  <div>
+    <span class="tag">self-contained</span><span class="tag">LLM-readable</span><span class="tag">human-readable</span><span class="tag">portable</span><span class="tag">review before sharing</span><span class="tag">no platform lock-in</span>
+  </div>
+</section>
+<footer>Collider · context first, chemistry second.</footer>
+</main>
+<script>
+const prompt = "# Collider — Self-Offboard to Markdown\n\nCopy the prompt below into the AI assistant that knows you best.\n\n```text\nYou are creating my COLLIDER OFFBOARD: a compact, self-contained Markdown profile that another person — or another AI — can read before we meet.\n\nThe goal is not a CV, biography, personality test, or sales pitch. The goal is to transfer enough useful context that a group can start with shared knowledge instead of spending the first hour reconstructing who everyone is.\n\nUse what you already know about me from this conversation and any memory/context you legitimately have access to. Do not invent missing facts. If something important is missing, either omit it or mark it as \"Not enough context\".\n\nWrite in my language unless I ask otherwise.\n\nIMPORTANT:\n- Return ONLY Markdown.\n- No preamble, no explanation after it.\n- Make it useful to humans first, but regular enough for an LLM to parse.\n- Keep it compact: roughly 700–1200 words unless there is genuinely less to say.\n- Prefer concrete examples, projects, tensions, odd interests, and working patterns over generic adjectives.\n- Preserve my own vocabulary when it is distinctive.\n- Do not include passwords, API keys, private addresses, account numbers, sensitive health data, or information I would reasonably not want shared with a new group.\n- Clearly separate facts you know from interpretations. Do not fabricate confidence.\n- The result must stand alone: a reader should not need access to this chat.\n\nUse EXACTLY this structure:\n\n# COLLIDER OFFBOARD — [Name]\n\n> **In one line:** [A useful, specific description of me — not a slogan.]\n\n## Who I am\nA short paragraph: current context, role/domain, and the arc that brought me here.\n\n## What I actually do\n- [3–7 concrete things I spend energy on]\n- Include how this differs from my formal title if relevant.\n\n## What I know / can help with\n### Deep\n- [areas where I have substantial practical depth]\n\n### Useful\n- [areas where I can contribute, connect dots, or help move work forward]\n\n### Curious about\n- [areas I am actively learning or exploring]\n\n## What I am working on now\nFor each important current project or theme:\n- **[Name]:** what it is, why I care, and current status in 1–3 sentences.\n\n## How I think\n- **Mental models:** [recurring frameworks, analogies, or ways I decompose problems]\n- **Default move:** [what I tend to do when a problem is fuzzy]\n- **Evidence style:** [what tends to convince me]\n- **Tension I keep returning to:** [a real trade-off or question I care about]\n\n## How I work with people\n- **Best with:** [conditions / collaboration patterns]\n- **I tend to bring:** [what others can expect from me]\n- **Please do:** [ways to work well with me]\n- **Please avoid:** [things that create friction]\n- **Communication:** [direct/async/visual/iterative/etc., grounded in observed behavior]\n\n## Things that light me up\n- [specific topics, problems, tools, domains, or kinds of conversation]\n- Include at least one non-work interest if known.\n\n## Things that drain me\n- [specific situations, not personality labels]\n\n## My current edges\nThings I am trying to get better at, unresolved questions, constraints, or areas where I want help.\n- [3–6 items]\n\n## Unexpected / human stuff\n- [3–7 memorable details, hobbies, places, quirks, side projects, or references that make connection easier]\n- Keep this shareable and non-sensitive.\n\n## If we are about to work together\n**You can pull me in when:** [specific situations]\n\n**I would love to meet people who:** [specific kinds of people, expertise, or perspectives]\n\n**Ask me about:** [5–8 strong conversation starters]\n\n## Current context snapshot\n- **Generated:** [YYYY-MM-DD]\n- **Source:** AI-assisted self-offboard based on available conversation/context\n- **Confidence note:** [briefly identify any sections where context was thin or possibly stale]\n- **Sharing:** Intended to be shared with the Collider group; exclude anything that should not travel.\n\nEnd after the final bullet. Do not add commentary.\n```\n\nThe returned Markdown is the artifact. Save it as `firstname-lastname.md` and bring it into the shared Collider space.\n";
+const ta=document.getElementById('prompt');ta.value=prompt;
+document.getElementById('copy').onclick=async()=>{await navigator.clipboard.writeText(prompt);const b=document.getElementById('copy');b.textContent='Copied';setTimeout(()=>b.textContent='Copy prompt',1400)};
+document.getElementById('download').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([prompt],{type:'text/markdown'}));a.download='collider-offboard-prompt.md';a.click();URL.revokeObjectURL(a.href)};
+</script>
+</body>
+</html>
